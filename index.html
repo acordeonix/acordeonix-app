@@ -259,6 +259,10 @@
         <span><i class="swatch pull"></i>Cerrar fuelle</span>
         <span><i class="swatch dim"></i>Sin calibrar</span>
       </div>
+      <div style="margin-top:14px;padding:10px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+        <div style="font-size:12px;color:var(--brass);margin-bottom:4px;">Depuración MIDI (temporal)</div>
+        <div id="debugLog" style="font-family:monospace;font-size:11px;color:var(--ivory-dim);white-space:pre-wrap;max-height:140px;overflow-y:auto;">Esperando mensajes MIDI…</div>
+      </div>
     </div>
   </div>
 
@@ -518,6 +522,15 @@ function handleButtonEvent(isOn, idx, dir){
 }
 
 function onMIDIMessage(msg){
+  const hex = Array.from(msg.data).map(b => b.toString(16).padStart(2,'0')).join(' ');
+  console.log('MIDI IN:', hex);
+  const dbg = document.getElementById('debugLog');
+  if(dbg){
+    const line = document.createElement('div');
+    line.textContent = hex;
+    dbg.prepend(line);
+    while(dbg.children.length > 15) dbg.removeChild(dbg.lastChild);
+  }
   const [status, d1, d2] = msg.data;
   const type = status & 0xF0;
   const channel = status & 0x0F;
