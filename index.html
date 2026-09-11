@@ -498,13 +498,37 @@ function setInactive(id){
   });
 }
 
+function idsForNote(note){
+  // Encuentra qué botón(es) calibrados corresponden a esta nota MIDI,
+  // en cualquiera de las dos direcciones del fuelle.
+  const matches = [];
+  for(const id in mapping){
+    if(mapping[id].push === note) matches.push({id, dir:'push'});
+    if(mapping[id].pull === note) matches.push({id, dir:'pull'});
+  }
+  return matches;
+}
+
 function handleNoteEvent(isNoteOn, note){
-  // Las notas MIDI ahora solo se usan para etiquetar el asistente de
-  // calibración (para saber a qué nota push/pull corresponde el
-  // botón que se está calibrando). La identificación de qué botón
-  // físico se presionó (vista en vivo, grabar canción, práctica)
-  // usa el mensaje CC de identidad — ver handleButtonEvent().
-  if(calState.active && isNoteOn) calCapture(note);
+  if(calState.active){
+    if(isNoteOn) calCapture(note);
+    return;
+  }
+  // Respaldo para hardware (como el Arduino actual) que solo manda
+  // notas MIDI normales, sin el mensaje CC de identidad de botón.
+  // Busca en el mapeo calibrado qué botón(es) usan esta nota y los
+  // trata igual que handleButtonEvent().
+  idsForNote(note).forEach(({id, dir}) => {
+    if(isNoteOn){
+      setActive(id, dir);
+      if(recState.active) recCaptureById(id, dir);
+      if(practiceState.active) practiceCheckById(id, dir);
+      synthNoteOnForButton(id, dir);
+    } else {
+      setInactive(id);
+      synthNoteOffForButton(id);
+    }
+  });
 }
 
 function handleButtonEvent(isOn, idx, dir){
