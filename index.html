@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ACORDEONIX</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14110f">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #14110f;
+    --bg-panel: #1c1815;
+    --bg-panel-2: #221d19;
+    --ivory: #f2ead8;
+    --ivory-dim: #c9bfa9;
+    --brass: #c69a3a;
+    --brass-dim: #8a6f2c;
+    --glow-push: #3ec95f;
+    --glow-pull: #e6413a;
+    --danger: #d9534f;
+    --line: #33291f;
+    --text-dim: #a89e8d;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #241e18 0%, var(--bg) 55%),
+      var(--bg);
+    color:var(--ivory);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior:none;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px 100px;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+  h1{
+    font-family:'Alfa Slab One', serif;
+    font-size:22px;
+    letter-spacing:0.5px;
+    margin:0;
+    color:var(--brass);
+    text-shadow:0 1px 0 #000, 0 0 18px rgba(198,154,58,0.25);
+  }
+  .sub{font-size:11px;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;}
+  .midi-pill{
+    display:flex;align-items:center;gap:7px;
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    background:var(--bg-panel);border:1px solid var(--line);
+    padding:6px 10px;border-radius:99px;color:var(--text-dim);
+    cursor:pointer; user-select:none;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--danger);flex:none;}
+  .dot.on{background:#6fbf6f;box-shadow:0 0 8px #6fbf6f;}
+
+  select{
+    width:100%;background:var(--bg-panel);color:var(--ivory);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-family:'Work Sans';font-size:14px;margin-bottom:12px;
+  }
+
+  nav.tabs{display:flex;gap:6px;background:var(--bg-panel);border:1px solid var(--line);
+    border-radius:12px;padding:4px;margin-bottom:16px;}
+  nav.tabs button{
+    flex:1;background:transparent;border:none;color:var(--text-dim);
+    font-family:'Work Sans';font-weight:600;font-size:13px;padding:9px 4px;border-radius:9px;
+    cursor:pointer;
+  }
+  nav.tabs button.active{background:var(--brass);color:#1a1510;}
+
+  .panel{background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;}
+  .panel h2{margin:0 0 4px;font-size:15px;color:var(--ivory);font-weight:600;}
+  .panel p.hint{margin:0 0 12px;font-size:12.5px;color:var(--text-dim);line-height:1.5;}
+
+  /* --- Board --- */
+  .board-frame{
+    background:linear-gradient(180deg,#0f0d0b,#171310 60%,#0f0d0b);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:22px 10px;
+    position:relative;
+    overflow:hidden;
+  }
+  .board-frame::before{
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(90deg, rgba(255,255,255,0.015) 0 1px, transparent 1px 26px);
+    pointer-events:none;
+  }
+  .board{position:relative;margin:0 auto;}
+  .btn{
+    position:absolute;
+    width:44px;height:44px;
+    border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, #fffaf0, var(--ivory) 55%, #d8ccb2 100%);
+    border:1px solid #7a6d52;
+    box-shadow:0 3px 0 #7a6d52, 0 5px 8px rgba(0,0,0,0.5);
+    transform:translate(-50%,-50%);
+    transition:transform .06s ease, box-shadow .12s ease, background .12s ease;
+    cursor:pointer;
+  }
+  .btn .lbl{
+    position:absolute;top:4px;left:0;right:0;text-align:center;
+    font-family:'JetBrains Mono',monospace;font-size:8px;color:#5c5140;font-weight:700;
+    pointer-events:none;
+  }
+  .btn .notes{
+    position:absolute;bottom:3px;left:0;right:0;text-align:center;
+    font-family:'JetBrains Mono',monospace;font-size:6.5px;line-height:1.15;
+    color:#7a6d52;pointer-events:none;
+  }
+  .btn .notes .p{color:#2f8a45;}
+  .btn .notes .j{color:#c53a34;}
+  .btn.active .lbl, .btn.active .notes{color:rgba(0,0,0,0.55);}
+  .btn.active .notes .p, .btn.active .notes .j{color:rgba(0,0,0,0.55);}
+  .btn.active{
+    transform:translate(-50%,-48%);
+    box-shadow:0 1px 0 #7a6d52, 0 2px 4px rgba(0,0,0,0.5);
+  }
+  .btn.active.push{background:radial-gradient(circle at 32% 28%, #fff, var(--glow-push) 60%, #1f7a34);
+    box-shadow:0 1px 0 #1f7a34, 0 0 18px 3px rgba(62,201,95,0.65);}
+  .btn.active.pull{background:radial-gradient(circle at 32% 28%, #fff, var(--glow-pull) 60%, #8f1f1a);
+    box-shadow:0 1px 0 #8f1f1a, 0 0 18px 3px rgba(230,65,58,0.65);}
+  .btn.uncalibrated{opacity:0.38;}
+  .btn.target{
+    outline:3px solid var(--brass);
+    outline-offset:2px;
+    animation:pulse 1s ease-in-out infinite;
+  }
+  .btn.target.expect-pull{outline-color:var(--glow-pull);}
+  .btn.target.expect-push{outline-color:var(--glow-push);}
+  .btn.target-done{
+    outline:3px solid #6a8f6f;
+    outline-offset:2px;
+    opacity:0.75;
+  }
+  @keyframes pulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.4);}}
+
+  .legend{display:flex;gap:16px;justify-content:center;margin-top:14px;font-size:11px;color:var(--text-dim);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .swatch{width:10px;height:10px;border-radius:50%;}
+  .swatch.push{background:var(--glow-push);}
+  .swatch.pull{background:var(--glow-pull);}
+  .swatch.dim{background:#5c5140;}
+
+  /* --- Calibration --- */
+  .cal-target-name{
+    font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--brass);
+    text-align:center;margin-bottom:2px;
+  }
+  .cal-instruction{
+    text-align:center;font-size:15px;font-weight:600;margin:6px 0 4px;
+  }
+  .cal-instruction.push{color:var(--glow-push);}
+  .cal-instruction.pull{color:var(--glow-pull);}
+  .cal-progress{text-align:center;font-size:11px;color:var(--text-dim);margin-bottom:14px;font-family:'JetBrains Mono',monospace;}
+  .row-btns{display:flex;gap:8px;margin-top:12px;}
+  .row-btns button{flex:1;}
+
+  button.action{
+    background:var(--brass);color:#1a1510;border:none;border-radius:10px;
+    padding:11px 14px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:'Work Sans';
+  }
+  button.action.secondary{background:var(--bg-panel-2);color:var(--ivory-dim);border:1px solid var(--line);}
+  button.action.danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
+  button.action:disabled{opacity:0.4;}
+
+  .stat-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);
+    font-family:'JetBrains Mono',monospace;margin-top:4px;}
+
+  /* --- Songs --- */
+  .song-list{display:flex;flex-direction:column;gap:8px;}
+  .song-row{
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--bg-panel-2);border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;
+  }
+  .song-row .name{font-weight:600;font-size:14px;}
+  .song-row .meta{font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;}
+  .song-row .go{background:var(--brass);color:#1a1510;border:none;border-radius:8px;
+    padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;}
+
+  .rec-dot{width:9px;height:9px;border-radius:50%;background:var(--danger);animation:blink 1s infinite;display:inline-block;margin-right:6px;}
+  @keyframes blink{50%{opacity:0.25;}}
+
+  .step-tape{display:flex;flex-wrap:wrap;gap:5px;max-height:110px;overflow:auto;
+    background:var(--bg-panel-2);border:1px solid var(--line);border-radius:10px;padding:8px;margin-top:10px;}
+  .chip{font-family:'JetBrains Mono',monospace;font-size:10.5px;background:#171310;
+    border:1px solid var(--line);border-radius:6px;padding:3px 7px;color:var(--ivory-dim);}
+  .chip.push{border-color:var(--glow-push);color:var(--glow-push);}
+  .chip.pull{border-color:var(--glow-pull);color:var(--glow-pull);}
+
+  input[type=text]{
+    width:100%;background:var(--bg-panel-2);color:var(--ivory);border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;font-family:'Work Sans';font-size:14px;margin-top:10px;
+  }
+
+  .hide{display:none !important;}
+
+  .practice-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+  .practice-header .title{font-weight:700;font-size:16px;}
+  .practice-header .prog{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--brass);}
+  .bar{height:5px;background:var(--bg-panel-2);border-radius:99px;overflow:hidden;margin-bottom:16px;}
+  .bar>div{height:100%;background:var(--brass);transition:width .2s ease;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>ACORDEONIX</h1>
+      <div class="sub">34 botones · en vivo y práctica de canciones</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+      <div class="midi-pill" id="midiPill"><span class="dot" id="midiDot"></span><span id="midiLabel">USB: Conectar</span></div>
+      <div class="midi-pill" id="wifiPill"><span class="dot" id="wifiDot"></span><span id="wifiLabel">Pi WiFi: Conectar</span></div>
+      <div class="midi-pill" id="synthPill"><span class="dot" id="synthDot"></span><span id="synthLabel">Sonido: Cargar SF2</span></div>
+    </div>
+  </header>
+
+  <select id="midiSelect" class="hide"></select>
+
+  <div class="panel hide" id="wifiPanel">
+    <h2>Conectar a la Pi por WiFi</h2>
+    <p class="hint">Tu celular y la Pi deben estar en la misma red WiFi (o conectados al hotspot de la Pi). Ingresa la IP de la Pi — la puedes ver en la Pi con <code>hostname -I</code>.</p>
+    <input type="text" id="wifiIpInput" placeholder="ej. 192.168.1.42">
+    <button class="action" id="wifiConnectBtn" style="width:100%;margin-top:10px;">Conectar</button>
+  </div>
+
+  <div class="panel hide" id="synthPanel">
+    <h2>Sintetizador (sonido local)</h2>
+    <p class="hint">Carga un archivo SF2 desde tu celular. Se guarda en el dispositivo para que no tengas que volver a elegirlo cada vez que abras la app. El volumen y el sonido salen directo del altavoz/audífonos del celular — no necesitas la Raspberry Pi.</p>
+    <input type="file" id="sf2FileInput" accept=".sf2">
+    <div id="synthStatus" class="hint" style="margin-top:8px;"></div>
+    <button class="action" id="synthForgetBtn" style="width:100%;margin-top:10px;">Olvidar SF2 guardado</button>
+  </div>
+
+  <nav class="tabs">
+    <button data-tab="live" class="active">En vivo</button>
+    <button data-tab="calibrate">Calibrar</button>
+    <button data-tab="songs">Canciones</button>
+  </nav>
+
+  <!-- LIVE TAB -->
+  <div id="tab-live" class="tab">
+    <div class="panel">
+      <h2>Vista en vivo</h2>
+      <p class="hint">Los botones se iluminan verde al abrir el fuelle y rojo al cerrarlo, según la dirección del fuelle. Los botones opacos aún no están calibrados — visita la pestaña Calibrar.</p>
+      <div class="board-frame"><div class="board" id="boardLive"></div></div>
+      <div class="legend">
+        <span><i class="swatch push"></i>Abrir fuelle</span>
+        <span><i class="swatch pull"></i>Cerrar fuelle</span>
+        <span><i class="swatch dim"></i>Sin calibrar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALIBRATE TAB -->
+  <div id="tab-calibrate" class="tab hide">
+    <div class="panel">
+      <h2>Asistente de calibración</h2>
+      <p class="hint">Cada botón envía una nota distinta al empujar y al jalar. Recorre cada botón una vez, tocando la nota que pida el asistente. El progreso se guarda automáticamente — puedes parar y continuar después.</p>
+      <div class="cal-progress" id="calProgress">0 / 34 botones mapeados</div>
+      <div id="calDuplicates"></div>
+      <div class="board-frame"><div class="board" id="boardCal"></div></div>
+      <div class="cal-target-name" id="calTargetName">—</div>
+      <div class="cal-instruction push" id="calInstruction">Toca "Iniciar" para comenzar</div>
+      <div class="row-btns">
+        <button class="action secondary" id="calSkip">Saltar botón</button>
+        <button class="action secondary" id="calBack">Atrás</button>
+        <button class="action" id="calStart">Iniciar</button>
+      </div>
+      <div class="row-btns" style="margin-top:8px;">
+        <button class="action danger" id="calReset">Borrar toda la calibración</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SONGS TAB -->
+  <div id="tab-songs" class="tab hide">
+
+    <div class="panel" id="songLibraryPanel">
+      <h2>Tus canciones</h2>
+      <p class="hint">Graba una canción tocándola en el acordeón, o abre una guardada para practicar. También puedes exportar canciones como archivo para pasarlas a otro celular u otro ACORDEONIX.</p>
+      <div class="song-list" id="songList"></div>
+      <button class="action" id="newSongBtn" style="margin-top:12px;width:100%;">+ Grabar nueva canción</button>
+      <div class="row-btns" style="margin-top:8px;">
+        <button class="action secondary" id="importSongBtn">Importar archivo</button>
+        <button class="action secondary" id="exportAllBtn">Exportar todas</button>
+      </div>
+      <input type="file" id="importSongInput" accept="application/json" multiple class="hide">
+    </div>
+
+    <div class="panel hide" id="recordPanel">
+      <h2><span class="rec-dot hide" id="recDot"></span><span id="recTitle">Grabar una canción</span></h2>
+      <p class="hint">Presiona grabar y luego toca la melodía en tu acordeón, botón por botón. Cada pulsación se captura con su dirección de empuje/jale.</p>
+      <div class="board-frame"><div class="board" id="boardRec"></div></div>
+      <input type="text" id="songNameInput" placeholder="Nombre de la canción (ej. Mezquite)">
+      <div class="step-tape" id="stepTape"></div>
+      <div class="stat-row"><span id="stepCount">0 pasos capturados</span><span id="lastNote">—</span></div>
+      <div class="row-btns">
+        <button class="action secondary" id="recUndo">Deshacer último</button>
+        <button class="action" id="recToggle">Iniciar grabación</button>
+      </div>
+      <div class="row-btns" style="margin-top:8px;">
+        <button class="action secondary" id="recCancel">Cancelar</button>
+        <button class="action" id="recSave">Guardar canción</button>
+      </div>
+    </div>
+
+    <div class="panel hide" id="practicePanel">
+      <div class="practice-header">
+        <div class="title" id="practiceTitle">Canción</div>
+        <div class="prog" id="practiceProg">0 / 0</div>
+      </div>
+      <div class="bar"><div id="practiceBar" style="width:0%;"></div></div>
+      <div class="board-frame"><div class="board" id="boardPractice"></div></div>
+      <div class="cal-instruction" id="practiceInstruction" style="margin-top:10px;">Presiona el botón resaltado</div>
+      <div class="row-btns">
+        <button class="action secondary" id="practicePrev">◂ Atrás</button>
+        <button class="action secondary" id="practiceSkip">Saltar ▸</button>
+      </div>
+      <div class="row-btns" style="margin-top:8px;">
+        <button class="action danger" id="practiceExit">Salir de práctica</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+/* ---------------------------------------------------------------
+   GEOMETRÍA DEL TABLERO
+   3 columnas. row1/row3 (11 botones) se alinean entre sí. row2
+   (12 botones, al centro) queda un poco más abajo que el centro
+   exacto entre ellas — un ligero escalonado, igual que en la app
+   Cassoto — más su propio botón extra arriba sin pareja al lado.
+
+   VOLTEADO: las columnas de row1 y row3 están intercambiadas
+   (espejo horizontal) para que el tablero coincida con lo que ves
+   cuando colocas el celular frente a ti mientras miras el acordeón
+   — es decir, al revés de como se ve el acordeón directamente.
+------------------------------------------------------------------*/
+const ROWS = [
+  { id:'row1', count:11, colX:34,  rowOffset:1    },
+  { id:'row2', count:12, colX:96,  rowOffset:0.3  },
+  { id:'row3', count:11, colX:158, rowOffset:1    },
+];
+const SPACING = 50;
+const PAD_TOP = 24;
+const BOARD_WIDTH = 192;
+const BOARD_HEIGHT = Math.max(...ROWS.map(r => (r.rowOffset + r.count) * SPACING)) + PAD_TOP;
+
+function allButtonIds(){
+  const ids = [];
+  ROWS.forEach(r => { for(let i=0;i<r.count;i++) ids.push(r.id+'-'+i); });
+  return ids;
+}
+
+function buildBoard(container){
+  container.style.width = BOARD_WIDTH+'px';
+  container.style.height = BOARD_HEIGHT+'px';
+  container.innerHTML = '';
+  const els = {};
+  ROWS.forEach(row => {
+    for(let i=0;i<row.count;i++){
+      const id = row.id+'-'+i;
+      const el = document.createElement('div');
+      el.className = 'btn uncalibrated';
+      el.dataset.id = id;
+      const x = row.colX;
+      const y = PAD_TOP + (row.rowOffset + i) * SPACING;
+      el.style.left = x+'px';
+      el.style.top = y+'px';
+      const lbl = document.createElement('div');
+      lbl.className='lbl';
+      lbl.textContent = i+1;
+      el.appendChild(lbl);
+      const notes = document.createElement('div');
+      notes.className='notes';
+      notes.innerHTML = '<span class="p">–</span> <span class="j">–</span>';
+      el.appendChild(notes);
+      container.appendChild(el);
+      els[id] = el;
+    }
+  });
+  return els;
+}
+
+const boardLive = buildBoard(document.getElementById('boardLive'));
+const boardCal  = buildBoard(document.getElementById('boardCal'));
+const boardRec  = buildBoard(document.getElementById('boardRec'));
+const boardPractice = buildBoard(document.getElementById('boardPractice'));
+const ALL_BOARDS = [boardLive, boardCal, boardRec, boardPractice];
+
+/* ---------------------------------------------------------------
+   MAPPING  (localStorage)
+   mapping = { "row1-0": {push:60, pull:62}, ... }
+------------------------------------------------------------------*/
+let mapping = JSON.parse(localStorage.getItem('acordeonix_mapping_v1') || '{}');
+function saveMapping(){ localStorage.setItem('acordeonix_mapping_v1', JSON.stringify(mapping)); }
+
+/* Nombres de nota en solfeo (Do, Re, Mi...) para mostrar en cada botón */
+const NOMBRES_NOTA = ['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
+function notaSolfeo(midi){
+  if(midi==null) return '–';
+  const nombre = NOMBRES_NOTA[((midi%12)+12)%12];
+  const octava = Math.floor(midi/12)-1;
+  return nombre+octava;
+}
+
+function refreshButtonNoteLabels(){
+  const ids = allButtonIds();
+  ALL_BOARDS.forEach(board => {
+    ids.forEach(id => {
+      const el = board[id].querySelector('.notes');
+      if(!el) return;
+      const m = mapping[id] || {};
+      el.innerHTML = '<span class="p">'+notaSolfeo(m.push)+'</span> <span class="j">'+notaSolfeo(m.pull)+'</span>';
+    });
+  });
+}
+
+function refreshCalibratedStyling(){
+  const ids = allButtonIds();
+  ALL_BOARDS.forEach(board => {
+    ids.forEach(id => {
+      const has = mapping[id] && (mapping[id].push!=null || mapping[id].pull!=null);
+      board[id].classList.toggle('uncalibrated', !has);
+    });
+  });
+  const count = ids.filter(id => mapping[id] && mapping[id].push!=null && mapping[id].pull!=null).length;
+  document.getElementById('calProgress').textContent = count+' / '+ids.length+' botones totalmente mapeados';
+  refreshButtonNoteLabels();
+  renderDuplicateReport();
+}
+refreshCalibratedStyling();
+
+function findDuplicateNoteGroups(){
+  const byNote = {};
+  for(const id in mapping){
+    if(mapping[id].push!=null){
+      (byNote[mapping[id].push] ||= []).push(id+' (push)');
+    }
+    if(mapping[id].pull!=null){
+      (byNote[mapping[id].pull] ||= []).push(id+' (pull)');
+    }
+  }
+  return Object.entries(byNote).filter(([note, list]) => list.length > 1);
+}
+
+function renderDuplicateReport(){
+  const el = document.getElementById('calDuplicates');
+  if(!el) return;
+  const dupes = findDuplicateNoteGroups();
+  if(dupes.length === 0){ el.innerHTML = ''; return; }
+  el.innerHTML = '<p class="hint" style="margin-top:10px;color:var(--brass);">'
+    + 'Algunos botones comparten la misma nota musical — esto es normal en un acordeón diatónico. '
+    + 'Ya no afecta la vista en vivo (cada botón se identifica por sí mismo), esto es solo informativo:</p>'
+    + dupes.map(([note, list]) => `<div class="chip" style="display:block;margin-top:4px;">nota ${note}: ${list.join(', ')}</div>`).join('');
+}
+
+/* ---------------------------------------------------------------
+   MIDI
+------------------------------------------------------------------*/
+let midiAccess = null;
+let currentInput = null;
+const midiPill = document.getElementById('midiPill');
+const midiDot = document.getElementById('midiDot');
+const midiLabel = document.getElementById('midiLabel');
+const midiSelect = document.getElementById('midiSelect');
+
+function setActive(id, dir){
+  ALL_BOARDS.forEach(board => {
+    const el = board[id];
+    if(!el) return;
+    el.classList.remove('push','pull');
+    el.classList.add('active', dir);
+  });
+}
+function setInactive(id){
+  ALL_BOARDS.forEach(board => {
+    const el = board[id];
+    if(!el) return;
+    el.classList.remove('active','push','pull');
+  });
+}
+
+function handleNoteEvent(isNoteOn, note){
+  // Las notas MIDI ahora solo se usan para etiquetar el asistente de
+  // calibración (para saber a qué nota push/pull corresponde el
+  // botón que se está calibrando). La identificación de qué botón
+  // físico se presionó (vista en vivo, grabar canción, práctica)
+  // usa el mensaje CC de identidad — ver handleButtonEvent().
+  if(calState.active && isNoteOn) calCapture(note);
+}
+
+function handleButtonEvent(isOn, idx, dir){
+  const id = calIds[idx];
+  if(!id) return;
+  if(isOn){
+    setActive(id, dir);
+    if(recState.active) recCaptureById(id, dir);
+    if(practiceState.active) practiceCheckById(id, dir);
+    synthNoteOnForButton(id, dir);
+  } else {
+    setInactive(id);
+    synthNoteOffForButton(id);
+  }
+}
+
+function onMIDIMessage(msg){
+  const [status, d1, d2] = msg.data;
+  const type = status & 0xF0;
+  const channel = status & 0x0F;
+
+  // Mensaje CC de identidad de botón (canal 16 / índice 15)
+  if(type === 0xB0 && channel === 15){
+    if(d1 === 102){ // CC_BTN_ON — value = idx (0-33), +64 si jala
+      const idx = d2 >= 64 ? d2-64 : d2;
+      const dir = d2 >= 64 ? 'pull' : 'push';
+      handleButtonEvent(true, idx, dir);
+    } else if(d1 === 103){ // CC_BTN_OFF — value = idx
+      handleButtonEvent(false, d2, null);
+    }
+    return;
+  }
+
+  // Nota MIDI normal (usada solo durante calibración)
+  const isNoteOn = type === 0x90 && d2 > 0;
+  const isNoteOff = type === 0x80 || (type === 0x90 && d2 === 0);
+  if(isNoteOn) handleNoteEvent(true, d1);
+  else if(isNoteOff) handleNoteEvent(false, d1);
+}
+
+function attachInput(input){
+  if(currentInput) currentInput.onmidimessage = null;
+  currentInput = input;
+  input.onmidimessage = onMIDIMessage;
+  midiDot.classList.add('on');
+  midiLabel.textContent = input.name.length>18 ? input.name.slice(0,18)+'…' : input.name;
+}
+
+function populateInputs(){
+  const inputs = Array.from(midiAccess.inputs.values());
+  midiSelect.innerHTML = '';
+  if(inputs.length===0){
+    const opt = document.createElement('option');
+    opt.textContent = 'No se encontraron dispositivos MIDI';
+    midiSelect.appendChild(opt);
+    midiSelect.classList.remove('hide');
+    return;
+  }
+  inputs.forEach((inp,i) => {
+    const opt = document.createElement('option');
+    opt.value = inp.id;
+    opt.textContent = inp.name;
+    midiSelect.appendChild(opt);
+  });
+  midiSelect.classList.remove('hide');
+  attachInput(inputs[0]);
+}
+
+midiSelect.addEventListener('change', () => {
+  const input = Array.from(midiAccess.inputs.values()).find(i => i.id === midiSelect.value);
+  if(input) attachInput(input);
+});
+
+midiPill.addEventListener('click', () => {
+  if(!navigator.requestMIDIAccess){
+    midiLabel.textContent = 'Navegador no compatible';
+    return;
+  }
+  navigator.requestMIDIAccess({sysex:false}).then(access => {
+    midiAccess = access;
+    populateInputs();
+    access.onstatechange = populateInputs;
+  }).catch(() => { midiLabel.textContent = 'Acceso denegado'; });
+});
+
+/* ---------------------------------------------------------------
+   WIFI BRIDGE (from the Pi)
+   Pi runs a small script that reads the same ALSA MIDI stream
+   fluidsynth uses and rebroadcasts each event over a WebSocket as
+   JSON. Identidad de botón (preferido, distingue botones con la
+   misma nota): {"type":"btnon","idx":N,"dir":"push/pull"} /
+   {"type":"btnoff","idx":N}. Nota MIDI cruda (usada solo si el
+   asistente de calibración está activo): {"type":"noteon","note":60}
+   / {"type":"noteoff","note":60}.
+------------------------------------------------------------------*/
+let bridgeSocket = null;
+const wifiPill = document.getElementById('wifiPill');
+const wifiDot = document.getElementById('wifiDot');
+const wifiLabel = document.getElementById('wifiLabel');
+const wifiPanel = document.getElementById('wifiPanel');
+const wifiIpInput = document.getElementById('wifiIpInput');
+const wifiConnectBtn = document.getElementById('wifiConnectBtn');
+
+wifiPill.addEventListener('click', () => {
+  wifiPanel.classList.toggle('hide');
+});
+
+function connectBridge(){
+  const ip = wifiIpInput.value.trim();
+  if(!ip){ wifiLabel.textContent = 'Ingresa la IP de la Pi'; return; }
+  if(bridgeSocket) bridgeSocket.close();
+  const url = 'ws://'+ip+':8765';
+  wifiLabel.textContent = 'Conectando…';
+  bridgeSocket = new WebSocket(url);
+  bridgeSocket.onopen = () => {
+    wifiDot.classList.add('on');
+    wifiLabel.textContent = ip;
+    localStorage.setItem('acordeonix_pi_ip', ip);
+  };
+  bridgeSocket.onclose = () => {
+    wifiDot.classList.remove('on');
+    wifiLabel.textContent = 'Desconectado';
+  };
+  bridgeSocket.onerror = () => {
+    wifiLabel.textContent = 'Conexión fallida';
+  };
+  bridgeSocket.onmessage = (evt) => {
+    try{
+      const msg = JSON.parse(evt.data);
+      if(msg.type === 'btnon') handleButtonEvent(true, msg.idx, msg.dir);
+      else if(msg.type === 'btnoff') handleButtonEvent(false, msg.idx, null);
+      else if(msg.type === 'noteon') handleNoteEvent(true, msg.note);
+      else if(msg.type === 'noteoff') handleNoteEvent(false, msg.note);
+    }catch(e){}
+  };
+}
+wifiConnectBtn.addEventListener('click', connectBridge);
+const savedIp = localStorage.getItem('acordeonix_pi_ip');
+if(savedIp) wifiIpInput.value = savedIp;
+
+/* ---------------------------------------------------------------
+   TABS
+------------------------------------------------------------------*/
+document.querySelectorAll('nav.tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab').forEach(t=>t.classList.add('hide'));
+    document.getElementById('tab-'+btn.dataset.tab).classList.remove('hide');
+  });
+});
+
+/* ---------------------------------------------------------------
+   CALIBRATION WIZARD
+------------------------------------------------------------------*/
+const calState = { active:false, index:0, stage:'push' };
+const calIds = allButtonIds();
+const calTargetName = document.getElementById('calTargetName');
+const calInstruction = document.getElementById('calInstruction');
+const calStartBtn = document.getElementById('calStart');
+const calSkipBtn = document.getElementById('calSkip');
+const calBackBtn = document.getElementById('calBack');
+const calResetBtn = document.getElementById('calReset');
+
+function calRender(){
+  const ids = allButtonIds();
+  ids.forEach(id => boardCal[id].classList.remove('target','expect-push','expect-pull'));
+  if(!calState.active) return;
+  const id = calIds[calState.index];
+  calTargetName.textContent = 'Botón '+id;
+  boardCal[id].classList.add('target', calState.stage==='push' ? 'expect-push':'expect-pull');
+  calInstruction.className = 'cal-instruction '+calState.stage;
+  calInstruction.textContent = calState.stage==='push'
+    ? 'Abre el fuelle y presiona este botón'
+    : 'Ahora cierra el fuelle y presiona el mismo botón';
+  calBackBtn.disabled = (calState.index===0 && calState.stage==='push');
+}
+
+function calNextStage(){
+  if(calState.stage==='push'){
+    calState.stage='pull';
+  } else {
+    calState.stage='push';
+    calState.index++;
+    if(calState.index >= calIds.length){
+      calState.active=false;
+      calInstruction.textContent = '¡Listo! Puedes volver a calibrar cuando quieras.';
+      calRender();
+      refreshCalibratedStyling();
+      return;
+    }
+  }
+  calRender();
+}
+
+function calCapture(note){
+  const id = calIds[calState.index];
+  if(!mapping[id]) mapping[id] = {};
+  mapping[id][calState.stage] = note;
+  saveMapping();
+  refreshCalibratedStyling();
+  calNextStage();
+}
+
+calStartBtn.addEventListener('click', () => {
+  calState.active = true;
+  calState.index = 0;
+  calState.stage = 'push';
+  calRender();
+});
+calSkipBtn.addEventListener('click', () => {
+  if(!calState.active) return;
+  calState.stage='pull';
+  calNextStage();
+});
+calBackBtn.addEventListener('click', () => {
+  if(!calState.active) return;
+  if(calState.stage==='pull'){ calState.stage='push'; }
+  else if(calState.index>0){ calState.index--; calState.stage='pull'; }
+  calRender();
+});
+calResetBtn.addEventListener('click', () => {
+  if(!confirm('¿Borrar todos los botones calibrados? Esto no se puede deshacer.')) return;
+  mapping = {};
+  saveMapping();
+  refreshCalibratedStyling();
+});
+
+/* ---------------------------------------------------------------
+   SONGS  (localStorage)
+   song = { name, steps:[{id, dir}] }
+------------------------------------------------------------------*/
+let songs = JSON.parse(localStorage.getItem('acordeonix_songs_v1') || '[]');
+function saveSongs(){ localStorage.setItem('acordeonix_songs_v1', JSON.stringify(songs)); }
+
+function descargarJSON(obj, nombreArchivo){
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function nombreArchivoSeguro(nombre){
+  return nombre.trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'') || 'cancion';
+}
+
+const songListEl = document.getElementById('songList');
+function renderSongList(){
+  songListEl.innerHTML = '';
+  if(songs.length===0){
+    const p = document.createElement('p');
+    p.className = 'hint';
+    p.textContent = 'Aún no hay canciones — graba la primera abajo.';
+    songListEl.appendChild(p);
+    return;
+  }
+  songs.forEach((song, idx) => {
+    const row = document.createElement('div');
+    row.className = 'song-row';
+    row.innerHTML = `<div><div class="name">${song.name}</div><div class="meta">${song.steps.length} pasos</div></div>`;
+    const goBtn = document.createElement('button');
+    goBtn.className = 'go';
+    goBtn.textContent = 'Practicar';
+    goBtn.addEventListener('click', () => startPractice(idx));
+    const expBtn = document.createElement('button');
+    expBtn.className = 'go';
+    expBtn.style.background = 'transparent';
+    expBtn.style.color = 'var(--brass)';
+    expBtn.style.border = '1px solid var(--brass)';
+    expBtn.style.marginLeft = '6px';
+    expBtn.textContent = 'Exportar';
+    expBtn.addEventListener('click', () => {
+      descargarJSON({acordeonixSong:1, name:song.name, steps:song.steps}, nombreArchivoSeguro(song.name)+'.acordeonix.json');
+    });
+    const delBtn = document.createElement('button');
+    delBtn.className = 'go';
+    delBtn.style.background = 'transparent';
+    delBtn.style.color = 'var(--danger)';
+    delBtn.style.border = '1px solid var(--danger)';
+    delBtn.style.marginLeft = '6px';
+    delBtn.textContent = 'Eliminar';
+    delBtn.addEventListener('click', () => {
+      if(confirm('¿Eliminar "'+song.name+'"?')){ songs.splice(idx,1); saveSongs(); renderSongList(); }
+    });
+    const btnWrap = document.createElement('div');
+    btnWrap.style.display='flex';
+    btnWrap.style.flexWrap='wrap';
+    btnWrap.style.gap='4px';
+    btnWrap.appendChild(goBtn);
+    btnWrap.appendChild(expBtn);
+    btnWrap.appendChild(delBtn);
+    row.appendChild(btnWrap);
+    songListEl.appendChild(row);
+  });
+}
+renderSongList();
+
+/* --- importar / exportar canciones (archivo .json) ---
+   Las canciones se guardan por posición de botón (id+dir), no por
+   nota musical, así que un archivo exportado funciona igual en
+   cualquier ACORDEONIX con el mismo diseño de 34 botones, sin
+   importar la calibración de cada uno. */
+const importSongBtn = document.getElementById('importSongBtn');
+const importSongInput = document.getElementById('importSongInput');
+const exportAllBtn = document.getElementById('exportAllBtn');
+
+importSongBtn.addEventListener('click', () => importSongInput.click());
+importSongInput.addEventListener('change', () => {
+  const files = Array.from(importSongInput.files || []);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = JSON.parse(reader.result);
+        const lista = Array.isArray(data) ? data : [data];
+        lista.forEach(item => {
+          if(item && item.name && Array.isArray(item.steps)){
+            songs.push({name:item.name, steps:item.steps});
+          }
+        });
+        saveSongs();
+        renderSongList();
+      }catch(e){
+        alert('No se pudo leer "'+file.name+'" — no es un archivo de canción válido.');
+      }
+    };
+    reader.readAsText(file);
+  });
+  importSongInput.value = '';
+});
+exportAllBtn.addEventListener('click', () => {
+  if(songs.length===0){ alert('Todavía no tienes canciones guardadas.'); return; }
+  descargarJSON(songs.map(s=>({acordeonixSong:1, name:s.name, steps:s.steps})), 'acordeonix-canciones.json');
+});
+
+/* --- recording --- */
+const songLibraryPanel = document.getElementById('songLibraryPanel');
+const recordPanel = document.getElementById('recordPanel');
+const practicePanel = document.getElementById('practicePanel');
+const newSongBtn = document.getElementById('newSongBtn');
+const recToggle = document.getElementById('recToggle');
+const recDot = document.getElementById('recDot');
+const recUndo = document.getElementById('recUndo');
+const recCancel = document.getElementById('recCancel');
+const recSave = document.getElementById('recSave');
+const stepTape = document.getElementById('stepTape');
+const stepCount = document.getElementById('stepCount');
+const lastNote = document.getElementById('lastNote');
+const songNameInput = document.getElementById('songNameInput');
+
+const recState = { active:false, steps:[] };
+
+/* Botones presionados casi al mismo tiempo (dentro de esta ventana)
+   se agrupan como un solo "acorde" en la canción, ya que en el
+   acordeón a veces se tocan varios botones juntos. */
+const CHORD_WINDOW_MS = 70;
+let chordBuffer = null;
+
+function showPanel(which){
+  songLibraryPanel.classList.toggle('hide', which!=='library');
+  recordPanel.classList.toggle('hide', which!=='record');
+  practicePanel.classList.toggle('hide', which!=='practice');
+}
+
+newSongBtn.addEventListener('click', () => {
+  recState.active = false;
+  recState.steps = [];
+  chordBuffer = null;
+  songNameInput.value = '';
+  renderTape();
+  recToggle.textContent = 'Iniciar grabación';
+  recDot.classList.add('hide');
+  showPanel('record');
+});
+recCancel.addEventListener('click', () => { recState.active=false; showPanel('library'); });
+
+recToggle.addEventListener('click', () => {
+  recState.active = !recState.active;
+  recToggle.textContent = recState.active ? 'Pausar grabación' : 'Reanudar grabación';
+  recDot.classList.toggle('hide', !recState.active);
+});
+
+function recCaptureById(id, dir){
+  if(chordBuffer){
+    clearTimeout(chordBuffer.timer);
+  } else {
+    chordBuffer = { notes: [] };
+  }
+  chordBuffer.notes.push({id, dir});
+  chordBuffer.timer = setTimeout(flushChord, CHORD_WINDOW_MS);
+}
+function flushChord(){
+  if(chordBuffer && chordBuffer.notes.length){
+    recState.steps.push(chordBuffer.notes);
+    renderTape();
+  }
+  chordBuffer = null;
+}
+function renderTape(){
+  stepTape.innerHTML = '';
+  recState.steps.forEach(notes => {
+    const chip = document.createElement('span');
+    chip.className = 'chip ' + (notes[0] ? notes[0].dir : '');
+    chip.textContent = notes.map(n => n.id.replace('row','R')+(n.dir==='push'?' ↑':' ↓')).join(' + ');
+    stepTape.appendChild(chip);
+  });
+  stepCount.textContent = recState.steps.length + ' pasos capturados';
+  const last = recState.steps[recState.steps.length-1];
+  lastNote.textContent = last ? last.map(n=>n.id).join(' + ') : '—';
+}
+recUndo.addEventListener('click', () => { recState.steps.pop(); renderTape(); });
+recSave.addEventListener('click', () => {
+  flushChord();
+  const name = songNameInput.value.trim();
+  if(!name){ alert('Primero ponle un nombre a la canción.'); return; }
+  if(recState.steps.length===0){ alert('Graba al menos una nota primero.'); return; }
+  songs.push({name, steps: recState.steps});
+  saveSongs();
+  recState.active = false;
+  renderSongList();
+  showPanel('library');
+});
+
+/* --- practice / follow mode --- */
+const practiceState = { active:false, songIdx:-1, stepIdx:0, pressed:new Set() };
+const practiceTitle = document.getElementById('practiceTitle');
+const practiceProg = document.getElementById('practiceProg');
+const practiceBar = document.getElementById('practiceBar');
+const practiceInstruction = document.getElementById('practiceInstruction');
+
+function startPractice(idx){
+  practiceState.active = true;
+  practiceState.songIdx = idx;
+  practiceState.stepIdx = 0;
+  practiceState.pressed = new Set();
+  practiceTitle.textContent = songs[idx].name;
+  showPanel('practice');
+  practiceRender();
+}
+function practiceRender(){
+  const song = songs[practiceState.songIdx];
+  const ids = allButtonIds();
+  ids.forEach(id => boardPractice[id].classList.remove('target','target-done','expect-push','expect-pull'));
+  if(practiceState.stepIdx >= song.steps.length){
+    practiceInstruction.textContent = '🎉 ¡Canción completa!';
+    practiceProg.textContent = song.steps.length+' / '+song.steps.length;
+    practiceBar.style.width = '100%';
+    return;
+  }
+  const notes = song.steps[practiceState.stepIdx];
+  notes.forEach(n => {
+    const done = practiceState.pressed.has(n.id+'|'+n.dir);
+    boardPractice[n.id].classList.add(done ? 'target-done' : 'target', 'expect-'+n.dir);
+  });
+  const first = notes[0];
+  practiceInstruction.className = 'cal-instruction '+first.dir;
+  practiceInstruction.textContent = (notes.length>1 ? 'Presiona juntos: ' : 'Presiona ')
+    + notes.map(n => n.id+' ('+(n.dir==='push'?'abrir':'cerrar')+')').join(', ');
+  practiceProg.textContent = practiceState.stepIdx+' / '+song.steps.length;
+  practiceBar.style.width = (100*practiceState.stepIdx/song.steps.length)+'%';
+}
+function practiceCheckById(id, dir){
+  const song = songs[practiceState.songIdx];
+  if(practiceState.stepIdx >= song.steps.length) return;
+  const notes = song.steps[practiceState.stepIdx];
+  const match = notes.some(n => n.id===id && n.dir===dir);
+  if(!match) return;
+  practiceState.pressed.add(id+'|'+dir);
+  const allDone = notes.every(n => practiceState.pressed.has(n.id+'|'+n.dir));
+  if(allDone){
+    practiceState.stepIdx++;
+    practiceState.pressed = new Set();
+  }
+  practiceRender();
+}
+document.getElementById('practicePrev').addEventListener('click', () => {
+  if(practiceState.stepIdx>0){ practiceState.stepIdx--; practiceState.pressed=new Set(); practiceRender(); }
+});
+document.getElementById('practiceSkip').addEventListener('click', () => {
+  practiceState.stepIdx++; practiceState.pressed=new Set(); practiceRender();
+});
+document.getElementById('practiceExit').addEventListener('click', () => {
+  practiceState.active = false;
+  showPanel('library');
+});
+
+/* ---------------------------------------------------------------
+   SINTETIZADOR LOCAL (fluidsynth vía WebAssembly, con SF2)
+   Reproduce el sonido directo en el celular usando el mapeo de
+   botones ya calibrado (mapping[id].push / mapping[id].pull),
+   sin depender de la Raspberry Pi.
+------------------------------------------------------------------*/
+const synthPill = document.getElementById('synthPill');
+const synthDot = document.getElementById('synthDot');
+const synthLabel = document.getElementById('synthLabel');
+const synthPanel = document.getElementById('synthPanel');
+const sf2FileInput = document.getElementById('sf2FileInput');
+const synthStatus = document.getElementById('synthStatus');
+const synthForgetBtn = document.getElementById('synthForgetBtn');
+
+const SF2_DB_NAME = 'acordeonix_sf2_db';
+const SF2_STORE = 'files';
+const SF2_KEY = 'current';
+
+let audioCtx = null;
+let synth = null;
+let synthReady = false;
+// Notas activas por botón, para poder apagarlas exactamente aunque
+// el usuario recalibre a media sesión.
+const activeSynthNotes = {};
+
+synthPill.addEventListener('click', () => {
+  synthPanel.classList.toggle('hide');
+});
+
+function sf2OpenDb(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(SF2_DB_NAME, 1);
+    req.onupgradeneeded = () => { req.result.createObjectStore(SF2_STORE); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function sf2Save(arrayBuffer, name){
+  const db = await sf2OpenDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(SF2_STORE, 'readwrite');
+    tx.objectStore(SF2_STORE).put({name, data: arrayBuffer}, SF2_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function sf2Load(){
+  const db = await sf2OpenDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(SF2_STORE, 'readonly');
+    const req = tx.objectStore(SF2_STORE).get(SF2_KEY);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function sf2Forget(){
+  const db = await sf2OpenDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(SF2_STORE, 'readwrite');
+    tx.objectStore(SF2_STORE).delete(SF2_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function setSynthStatus(text, ok){
+  synthStatus.textContent = text;
+  synthDot.style.background = ok ? '#3ecf5e' : '';
+  synthLabel.textContent = ok ? 'Sonido: activo' : 'Sonido: Cargar SF2';
+}
+
+async function ensureSynthEngine(){
+  if(synth) return;
+  await JSSynth.waitForReady();
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  synth = new JSSynth.Synthesizer();
+  synth.init(audioCtx.sampleRate);
+  const node = synth.createAudioNode(audioCtx, 8192);
+  node.connect(audioCtx.destination);
+}
+
+async function loadSoundfontIntoSynth(arrayBuffer, label){
+  await ensureSynthEngine();
+  if(audioCtx.state === 'suspended') await audioCtx.resume();
+  await synth.loadSFont(arrayBuffer);
+  synthReady = true;
+  setSynthStatus('Cargado: '+label, true);
+}
+
+sf2FileInput.addEventListener('change', async () => {
+  const file = sf2FileInput.files[0];
+  if(!file) return;
+  setSynthStatus('Cargando '+file.name+'…', false);
+  try{
+    const buf = await file.arrayBuffer();
+    await loadSoundfontIntoSynth(buf, file.name);
+    await sf2Save(buf, file.name); // se guarda para la próxima vez que abras la app
+  } catch(err){
+    setSynthStatus('Error al cargar: '+err.message, false);
+  }
+});
+
+synthForgetBtn.addEventListener('click', async () => {
+  await sf2Forget();
+  synthReady = false;
+  setSynthStatus('SF2 olvidado. Elige un archivo de nuevo.', false);
+});
+
+// Al abrir la app, intenta recuperar el SF2 ya guardado (no requiere
+// gesto del usuario para leer IndexedDB, pero sí para arrancar el
+// AudioContext — por eso se activa al primer toque en la pantalla).
+let pendingSavedSf2 = null;
+sf2Load().then(saved => {
+  if(saved){
+    pendingSavedSf2 = saved;
+    setSynthStatus('SF2 guardado: '+saved.name+' (toca la pantalla para activar el sonido)', false);
+  }
+}).catch(() => {});
+
+async function tryAutoRestoreSf2(){
+  if(!pendingSavedSf2 || synthReady) return;
+  try{
+    await loadSoundfontIntoSynth(pendingSavedSf2.data, pendingSavedSf2.name);
+    pendingSavedSf2 = null;
+  } catch(err){
+    console.warn('No se pudo restaurar el SF2 guardado:', err);
+  }
+}
+// Cualquier primer toque en la pantalla cuenta como gesto del usuario
+// y dispara la restauración automática del SF2 + el AudioContext.
+document.body.addEventListener('pointerdown', tryAutoRestoreSf2, {once:true});
+
+function synthNoteOnForButton(id, dir){
+  if(!synthReady) return;
+  const m = mapping[id];
+  const note = m && (dir==='push' ? m.push : m.pull);
+  if(note == null) return;
+  activeSynthNotes[id] = note;
+  synth.midiNoteOn(0, note, 100);
+}
+function synthNoteOffForButton(id){
+  if(!synthReady) return;
+  const note = activeSynthNotes[id];
+  if(note == null) return;
+  synth.midiNoteOff(0, note);
+  delete activeSynthNotes[id];
+}
+</script>
+<script src="lib/libfluidsynth-2.4.6.js"></script>
+<script src="lib/js-synthesizer.min.js"></script>
+</body>
+</html>
