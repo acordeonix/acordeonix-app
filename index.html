@@ -271,6 +271,17 @@
     <div class="panel">
       <h2>Asistente de calibración</h2>
       <p class="hint">Cada botón envía una nota distinta al empujar y al jalar. Recorre cada botón una vez, tocando la nota que pida el asistente. El progreso se guarda automáticamente — puedes parar y continuar después.</p>
+
+      <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Afinación de fábrica (sin calibrar)</div>
+        <p class="hint" style="margin-top:0;">Si tu acordeón usa una de estas 3 afinaciones estándar del firmware, elige una para aplicar el mapeo completo al instante — sin tocar el asistente.</p>
+        <div class="row-btns">
+          <button class="action secondary" data-tuning="GCF-Sol">Sol (GCF)</button>
+          <button class="action secondary" data-tuning="EAD-Mi">Mi (EAD)</button>
+          <button class="action secondary" data-tuning="FBbEb-Fa">Fa (FBbEb)</button>
+        </div>
+      </div>
+
       <div class="cal-progress" id="calProgress">0 / 34 botones mapeados</div>
       <div id="calDuplicates"></div>
       <div class="board-frame"><div class="board" id="boardCal"></div></div>
@@ -286,6 +297,21 @@
       </div>
     </div>
   </div>
+
+  <script>
+  document.querySelectorAll('[data-tuning]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.getAttribute('data-tuning');
+      const preset = BUILT_IN_TUNINGS[key];
+      if(!preset) return;
+      if(!confirm('Esto va a reemplazar tu calibración actual con la afinación "'+key+'". ¿Continuar?')) return;
+      mapping = JSON.parse(JSON.stringify(preset));
+      localStorage.setItem('acordeonix_mapping_v1', JSON.stringify(mapping));
+      refreshCalibratedStyling();
+      alert('Afinación "'+key+'" aplicada a los 34 botones.');
+    });
+  });
+  </script>
 
   <!-- SONGS TAB -->
   <div id="tab-songs" class="tab hide">
@@ -410,6 +436,13 @@ const ALL_BOARDS = [boardLive, boardCal, boardRec, boardPractice];
    mapping = { "row1-0": {push:60, pull:62}, ... }
 ------------------------------------------------------------------*/
 let mapping = JSON.parse(localStorage.getItem('acordeonix_mapping_v1') || '{}');
+
+// Afinaciones fijas de fábrica, extraídas directo del firmware
+// ACORDEONIX_LEONARDO_34REV2.ino (tabla NOTAS[3][34][2]). Elegir una
+// aquí sobreescribe `mapping` al instante, sin necesidad de calibrar.
+const BUILT_IN_TUNINGS = {"GCF-Sol": {"row1-0": {"push": 63, "pull": 61}, "row1-1": {"push": 57, "pull": 55}, "row1-2": {"push": 60, "pull": 59}, "row1-3": {"push": 64, "pull": 62}, "row1-4": {"push": 66, "pull": 67}, "row1-5": {"push": 69, "pull": 71}, "row1-6": {"push": 72, "pull": 74}, "row1-7": {"push": 76, "pull": 79}, "row1-8": {"push": 78, "pull": 83}, "row1-9": {"push": 81, "pull": 86}, "row1-10": {"push": 84, "pull": 91}, "row2-0": {"push": 68, "pull": 66}, "row2-1": {"push": 59, "pull": 55}, "row2-2": {"push": 62, "pull": 60}, "row2-3": {"push": 65, "pull": 64}, "row2-4": {"push": 69, "pull": 67}, "row2-5": {"push": 71, "pull": 72}, "row2-6": {"push": 74, "pull": 76}, "row2-7": {"push": 77, "pull": 79}, "row2-8": {"push": 81, "pull": 84}, "row2-9": {"push": 83, "pull": 88}, "row2-10": {"push": 86, "pull": 91}, "row2-11": {"push": 89, "pull": 96}, "row3-0": {"push": 73, "pull": 75}, "row3-1": {"push": 64, "pull": 60}, "row3-2": {"push": 67, "pull": 65}, "row3-3": {"push": 70, "pull": 69}, "row3-4": {"push": 74, "pull": 72}, "row3-5": {"push": 76, "pull": 77}, "row3-6": {"push": 79, "pull": 81}, "row3-7": {"push": 82, "pull": 84}, "row3-8": {"push": 86, "pull": 89}, "row3-9": {"push": 88, "pull": 93}, "row3-10": {"push": 91, "pull": 96}}, "EAD-Mi": {"row1-0": {"push": 60, "pull": 58}, "row1-1": {"push": 54, "pull": 52}, "row1-2": {"push": 57, "pull": 56}, "row1-3": {"push": 61, "pull": 59}, "row1-4": {"push": 63, "pull": 64}, "row1-5": {"push": 66, "pull": 68}, "row1-6": {"push": 69, "pull": 71}, "row1-7": {"push": 73, "pull": 76}, "row1-8": {"push": 75, "pull": 80}, "row1-9": {"push": 78, "pull": 83}, "row1-10": {"push": 81, "pull": 88}, "row2-0": {"push": 65, "pull": 63}, "row2-1": {"push": 56, "pull": 52}, "row2-2": {"push": 59, "pull": 57}, "row2-3": {"push": 62, "pull": 61}, "row2-4": {"push": 66, "pull": 64}, "row2-5": {"push": 68, "pull": 69}, "row2-6": {"push": 71, "pull": 73}, "row2-7": {"push": 74, "pull": 76}, "row2-8": {"push": 78, "pull": 81}, "row2-9": {"push": 80, "pull": 85}, "row2-10": {"push": 83, "pull": 88}, "row2-11": {"push": 86, "pull": 93}, "row3-0": {"push": 70, "pull": 72}, "row3-1": {"push": 61, "pull": 57}, "row3-2": {"push": 64, "pull": 62}, "row3-3": {"push": 67, "pull": 66}, "row3-4": {"push": 71, "pull": 69}, "row3-5": {"push": 73, "pull": 74}, "row3-6": {"push": 76, "pull": 78}, "row3-7": {"push": 79, "pull": 81}, "row3-8": {"push": 83, "pull": 86}, "row3-9": {"push": 85, "pull": 90}, "row3-10": {"push": 88, "pull": 93}}, "FBbEb-Fa": {"row1-0": {"push": 61, "pull": 59}, "row1-1": {"push": 55, "pull": 53}, "row1-2": {"push": 58, "pull": 57}, "row1-3": {"push": 62, "pull": 60}, "row1-4": {"push": 64, "pull": 65}, "row1-5": {"push": 67, "pull": 69}, "row1-6": {"push": 70, "pull": 72}, "row1-7": {"push": 74, "pull": 77}, "row1-8": {"push": 76, "pull": 81}, "row1-9": {"push": 79, "pull": 84}, "row1-10": {"push": 82, "pull": 89}, "row2-0": {"push": 66, "pull": 64}, "row2-1": {"push": 57, "pull": 53}, "row2-2": {"push": 60, "pull": 58}, "row2-3": {"push": 63, "pull": 62}, "row2-4": {"push": 67, "pull": 65}, "row2-5": {"push": 69, "pull": 70}, "row2-6": {"push": 72, "pull": 74}, "row2-7": {"push": 75, "pull": 77}, "row2-8": {"push": 79, "pull": 82}, "row2-9": {"push": 81, "pull": 86}, "row2-10": {"push": 84, "pull": 89}, "row2-11": {"push": 87, "pull": 94}, "row3-0": {"push": 71, "pull": 73}, "row3-1": {"push": 62, "pull": 58}, "row3-2": {"push": 65, "pull": 63}, "row3-3": {"push": 68, "pull": 67}, "row3-4": {"push": 72, "pull": 70}, "row3-5": {"push": 74, "pull": 75}, "row3-6": {"push": 77, "pull": 79}, "row3-7": {"push": 80, "pull": 82}, "row3-8": {"push": 84, "pull": 87}, "row3-9": {"push": 86, "pull": 91}, "row3-10": {"push": 89, "pull": 94}}}
+;
+
 function saveMapping(){ localStorage.setItem('acordeonix_mapping_v1', JSON.stringify(mapping)); }
 
 /* Nombres de nota en solfeo (Do, Re, Mi...) para mostrar en cada botón */
@@ -587,13 +620,22 @@ function attachInput(input){
 }
 
 function populateInputs(){
-  const inputs = Array.from(midiAccess.inputs.values());
+  // Ocultamos "FluidSynth" y otros sintetizadores virtuales que Android
+  // registra por sí solo — solo queremos ver acordeones/dispositivos MIDI
+  // de hardware reales en esta lista.
+  const inputs = Array.from(midiAccess.inputs.values())
+    .filter(inp => !/fluidsynth/i.test(inp.name || ''));
   midiSelect.innerHTML = '';
   if(inputs.length===0){
     const opt = document.createElement('option');
-    opt.textContent = 'No se encontraron dispositivos MIDI';
+    opt.textContent = 'Acordeón no conectado';
     midiSelect.appendChild(opt);
     midiSelect.classList.remove('hide');
+    if(currentInput) currentInput.onmidimessage = null;
+    currentInput = null;
+    midiPill.classList.remove('on');
+    midiDot.classList.remove('on');
+    midiLabel.textContent = 'USB: Conectar';
     return;
   }
   inputs.forEach((inp,i) => {
