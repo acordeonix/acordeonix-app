@@ -168,6 +168,7 @@
     padding:11px 14px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:'Work Sans';
   }
   button.action.secondary{background:var(--bg-panel-2);color:var(--ivory-dim);border:1px solid var(--line);}
+  button.action.secondary.active{background:var(--brass);color:#14110f;border-color:var(--brass);font-weight:600;}
   button.action.danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
   button.action:disabled{opacity:0.4;}
 
@@ -274,11 +275,21 @@
 
       <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
         <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Afinación de fábrica (sin calibrar)</div>
-        <p class="hint" style="margin-top:0;">Si tu acordeón usa una de estas 3 afinaciones estándar del firmware, elige una para aplicar el mapeo completo al instante — sin tocar el asistente.</p>
+        <p class="hint" style="margin-top:0;">Si tu acordeón usa una de estas 3 afinaciones estándar del firmware, elige una para aplicar el mapeo completo al instante — sin tocar el asistente. Si tu firmware ya avisa el cambio con el botón físico D13, esto se sincroniza solo.</p>
         <div class="row-btns">
           <button class="action secondary" data-tuning="GCF-Sol">Sol (GCF)</button>
           <button class="action secondary" data-tuning="EAD-Mi">Mi (EAD)</button>
           <button class="action secondary" data-tuning="FBbEb-Fa">Fa (FBbEb)</button>
+        </div>
+        <div class="hint tuning-indicator" style="margin-top:8px;color:var(--ivory-dim);"></div>
+      </div>
+
+      <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Tamaño del acordeón</div>
+        <p class="hint" style="margin-top:0;">El de 31 botones es igual al de 34, solo sin los últimos 3 (11, 23 y 34). Elige cuál tienes para que el tablero no muestre botones que no existen.</p>
+        <div class="row-btns">
+          <button class="action secondary" data-board-size="31">31 botones</button>
+          <button class="action secondary" data-board-size="34">34 botones</button>
         </div>
       </div>
 
@@ -302,14 +313,12 @@
   document.querySelectorAll('[data-tuning]').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.getAttribute('data-tuning');
-      const preset = BUILT_IN_TUNINGS[key];
-      if(!preset) return;
       if(!confirm('Esto va a reemplazar tu calibración actual con la afinación "'+key+'". ¿Continuar?')) return;
-      mapping = JSON.parse(JSON.stringify(preset));
-      localStorage.setItem('acordeonix_mapping_v1', JSON.stringify(mapping));
-      refreshCalibratedStyling();
-      alert('Afinación "'+key+'" aplicada a los 34 botones.');
+      applyTuningPreset(key);
     });
+  });
+  document.querySelectorAll('[data-board-size]').forEach(btn => {
+    btn.addEventListener('click', () => setBoardSize(btn.getAttribute('data-board-size')));
   });
   </script>
 
@@ -333,6 +342,11 @@
       <p class="hint">Presiona grabar y luego toca la melodía en tu acordeón, botón por botón. Cada pulsación se captura con su dirección de empuje/jale.</p>
       <div class="board-frame"><div class="board" id="boardRec"></div></div>
       <input type="text" id="songNameInput" placeholder="Nombre de la canción (ej. Mezquite)">
+      <div class="row-btns" id="recDifficultyRow" style="margin-top:8px;">
+        <button class="action secondary difficulty-opt active" data-difficulty="1">Fácil</button>
+        <button class="action secondary difficulty-opt" data-difficulty="2">Media</button>
+        <button class="action secondary difficulty-opt" data-difficulty="3">Difícil</button>
+      </div>
       <div class="step-tape" id="stepTape"></div>
       <div class="stat-row"><span id="stepCount">0 pasos capturados</span><span id="lastNote">—</span></div>
       <div class="row-btns">
@@ -430,6 +444,74 @@ const boardCal  = buildBoard(document.getElementById('boardCal'));
 const boardRec  = buildBoard(document.getElementById('boardRec'));
 const boardPractice = buildBoard(document.getElementById('boardPractice'));
 const ALL_BOARDS = [boardLive, boardCal, boardRec, boardPractice];
+
+// ── Tamaño de tablero: 31 o 34 botones ──────────────────────
+// El acordeón de 31 botones es igual al de 34, solo le faltan los
+// últimos botones de cada hilera (11, 23 y 34 en numeración física),
+// que corresponden a estos 3 ids del tablero:
+const BOARD_31_OMITTED = ['row1-10', 'row2-11', 'row3-10'];
+let boardSize = localStorage.getItem('acordeonix_board_size') || '34';
+
+function applyBoardSizeVisibility(){
+  ALL_BOARDS.forEach(board => {
+    BOARD_31_OMITTED.forEach(id => {
+      const el = board[id];
+      if(!el) return;
+      el.style.display = (boardSize === '31') ? 'none' : '';
+    });
+  });
+  document.querySelectorAll('[data-board-size]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-board-size') === boardSize);
+  });
+}
+
+function setBoardSize(size){
+  boardSize = size;
+  localStorage.setItem('acordeonix_board_size', size);
+  applyBoardSizeVisibility();
+}
+
+// ── Afinación: aplicar preset fijo (manual o automático por el
+// botón físico D13 del acordeón, vía mensaje MIDI Program Change) ──
+const TUNING_ORDER = ['GCF-Sol', 'EAD-Mi', 'FBbEb-Fa'];
+const TUNING_LABELS = {'GCF-Sol':'Sol (GCF)', 'EAD-Mi':'Mi (EAD)', 'FBbEb-Fa':'Fa (FBbEb)'};
+
+function applyTuningPreset(key, opts){
+  opts = opts || {};
+  const preset = BUILT_IN_TUNINGS[key];
+  if(!preset) return;
+  mapping = JSON.parse(JSON.stringify(preset));
+  localStorage.setItem('acordeonix_mapping_v1', JSON.stringify(mapping));
+  localStorage.setItem('acordeonix_current_tuning', key);
+  refreshCalibratedStyling();
+  document.querySelectorAll('.tuning-indicator').forEach(el => {
+    el.textContent = 'Afinación actual: ' + (TUNING_LABELS[key] || key);
+  });
+  document.querySelectorAll('[data-tuning]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-tuning') === key);
+  });
+  if(!opts.silent) alert('Afinación "'+TUNING_LABELS[key]+'" aplicada a los 34 botones.');
+}
+
+function applyTuningByIndex(idx){
+  const key = TUNING_ORDER[idx];
+  if(key) applyTuningPreset(key, {silent:true});
+}
+
+// Al abrir la app, restaura la última afinación elegida (si la hay)
+// para que el indicador visual no empiece vacío.
+(function restoreTuningIndicator(){
+  const saved = localStorage.getItem('acordeonix_current_tuning');
+  if(saved && TUNING_LABELS[saved]){
+    document.querySelectorAll('.tuning-indicator').forEach(el => {
+      el.textContent = 'Afinación actual: ' + TUNING_LABELS[saved];
+    });
+    document.querySelectorAll('[data-tuning]').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-tuning') === saved);
+    });
+  }
+})();
+applyBoardSizeVisibility();
 
 /* ---------------------------------------------------------------
    MAPPING  (localStorage)
@@ -601,6 +683,13 @@ function onMIDIMessage(msg){
     } else if(d1 === 103){ // CC_BTN_OFF — value = idx
       handleButtonEvent(false, d2, null);
     }
+    return;
+  }
+
+  // Program Change: el firmware manda esto cuando presionas el botón
+  // físico de afinación (D13). d1 = 0/1/2 según la afinación activa.
+  if(type === 0xC0){
+    applyTuningByIndex(d1);
     return;
   }
 
@@ -831,6 +920,15 @@ function nombreArchivoSeguro(nombre){
 }
 
 const songListEl = document.getElementById('songList');
+
+const DIFFICULTY_LABELS = {1:'Fácil', 2:'Media', 3:'Difícil'};
+
+function isSongUnlocked(song){
+  const diff = song.difficulty || 1;
+  if(diff <= 1) return true;
+  return songs.some(s => (s.difficulty||1) === diff-1 && s.completed);
+}
+
 function renderSongList(){
   songListEl.innerHTML = '';
   if(songs.length===0){
@@ -841,9 +939,22 @@ function renderSongList(){
     return;
   }
   songs.forEach((song, idx) => {
+    const diff = song.difficulty || 1;
+    const unlocked = isSongUnlocked(song);
     const row = document.createElement('div');
     row.className = 'song-row';
-    row.innerHTML = `<div><div class="name">${song.name}</div><div class="meta">${song.steps.length} pasos</div></div>`;
+    if(!unlocked) row.style.opacity = '0.5';
+    const badges = (song.completed ? ' · ✓ Completada' : '') + ' · ' + DIFFICULTY_LABELS[diff];
+    row.innerHTML = `<div><div class="name">${unlocked ? '' : '🔒 '}${song.name}</div><div class="meta">${song.steps.length} pasos${badges}</div></div>`;
+    if(!unlocked){
+      const lockMsg = document.createElement('div');
+      lockMsg.className = 'hint';
+      lockMsg.style.marginTop = '2px';
+      lockMsg.textContent = 'Completa una canción de nivel "'+DIFFICULTY_LABELS[diff-1]+'" para desbloquear esta.';
+      songListEl.appendChild(row);
+      row.appendChild(lockMsg);
+      return;
+    }
     const goBtn = document.createElement('button');
     goBtn.className = 'go';
     goBtn.textContent = 'Practicar';
@@ -995,14 +1106,26 @@ function renderTape(){
   lastNote.textContent = last ? last.map(n=>n.id).join(' + ') : '—';
 }
 recUndo.addEventListener('click', () => { recState.steps.pop(); renderTape(); });
+
+// ── Dificultad al grabar (Fácil / Media / Difícil) ──────────
+let recDifficulty = 1;
+document.querySelectorAll('.difficulty-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    recDifficulty = parseInt(btn.getAttribute('data-difficulty'), 10);
+    document.querySelectorAll('.difficulty-opt').forEach(b => b.classList.toggle('active', b===btn));
+  });
+});
+
 recSave.addEventListener('click', () => {
   flushChord();
   const name = songNameInput.value.trim();
   if(!name){ alert('Primero ponle un nombre a la canción.'); return; }
   if(recState.steps.length===0){ alert('Graba al menos una nota primero.'); return; }
-  songs.push({name, steps: recState.steps});
+  songs.push({name, steps: recState.steps, difficulty: recDifficulty, completed: false});
   saveSongs();
   recState.active = false;
+  recDifficulty = 1;
+  document.querySelectorAll('.difficulty-opt').forEach(b => b.classList.toggle('active', b.getAttribute('data-difficulty')==='1'));
   renderSongList();
   showPanel('library');
 });
@@ -1031,6 +1154,14 @@ function practiceRender(){
     practiceInstruction.textContent = '🎉 ¡Canción completa!';
     practiceProg.textContent = song.steps.length+' / '+song.steps.length;
     practiceBar.style.width = '100%';
+    if(!song.completed){
+      song.completed = true;
+      saveSongs();
+      const newlyUnlocked = songs.filter(s => (s.difficulty||1) === (song.difficulty||1)+1);
+      if(newlyUnlocked.length>0 && !songs.some(s => (s.difficulty||1)===(song.difficulty||1)+1 && s.completed)){
+        practiceInstruction.textContent += ' Nuevo nivel desbloqueado.';
+      }
+    }
     return;
   }
   const notes = song.steps[practiceState.stepIdx];
@@ -1067,6 +1198,7 @@ document.getElementById('practiceSkip').addEventListener('click', () => {
 });
 document.getElementById('practiceExit').addEventListener('click', () => {
   practiceState.active = false;
+  renderSongList();
   showPanel('library');
 });
 
