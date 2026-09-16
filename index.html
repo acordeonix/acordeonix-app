@@ -1147,7 +1147,11 @@ async function ensureSynthEngine(){
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   synth = new JSSynth.Synthesizer();
   synth.init(audioCtx.sampleRate);
-  const node = synth.createAudioNode(audioCtx, 8192);
+  // Buffer pequeño = menos retraso al tocar, a costa de más riesgo de
+  // "crujidos" si el celular no alcanza a procesar a tiempo. 1024 es un
+  // buen punto de partida (~23ms de latencia); si se escucha entrecortado,
+  // súbelo a 2048 o 4096.
+  const node = synth.createAudioNode(audioCtx, 1024);
   node.connect(audioCtx.destination);
 }
 
