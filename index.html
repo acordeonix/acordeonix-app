@@ -169,6 +169,8 @@
   }
   button.action.secondary{background:var(--bg-panel-2);color:var(--ivory-dim);border:1px solid var(--line);}
   button.action.secondary.active{background:var(--brass);color:#14110f;border-color:var(--brass);font-weight:600;}
+  .tuning-badge{flex:1;text-align:center;padding:8px 10px;border-radius:8px;font-size:13px;background:var(--bg-panel-2);color:var(--ivory-dim);border:1px solid var(--line);}
+  .tuning-badge.active{background:var(--brass);color:#14110f;border-color:var(--brass);font-weight:600;}
   button.action.danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
   button.action:disabled{opacity:0.4;}
 
@@ -274,14 +276,24 @@
       <p class="hint">Cada botón envía una nota distinta al empujar y al jalar. Recorre cada botón una vez, tocando la nota que pida el asistente. El progreso se guarda automáticamente — puedes parar y continuar después.</p>
 
       <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
-        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Afinación de fábrica (sin calibrar)</div>
-        <p class="hint" style="margin-top:0;">Si tu acordeón usa una de estas 3 afinaciones estándar del firmware, elige una para aplicar el mapeo completo al instante — sin tocar el asistente. Si tu firmware ya avisa el cambio con el botón físico D13, esto se sincroniza solo.</p>
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Afinación actual</div>
+        <p class="hint" style="margin-top:0;">Se sincroniza sola con el botón físico D13 del acordeón — no hace falta tocar nada aquí.</p>
         <div class="row-btns">
-          <button class="action secondary" data-tuning="GCF-Sol">Sol (GCF)</button>
-          <button class="action secondary" data-tuning="EAD-Mi">Mi (EAD)</button>
-          <button class="action secondary" data-tuning="FBbEb-Fa">Fa (FBbEb)</button>
+          <div class="tuning-badge" data-tuning-badge="GCF-Sol">Sol (GCF)</div>
+          <div class="tuning-badge" data-tuning-badge="EAD-Mi">Mi (EAD)</div>
+          <div class="tuning-badge" data-tuning-badge="FBbEb-Fa">Fa (FBbEb)</div>
         </div>
-        <div class="hint tuning-indicator" style="margin-top:8px;color:var(--ivory-dim);"></div>
+        <div style="margin-top:10px;">
+          <a href="#" id="advancedTuningToggle" class="hint" style="text-decoration:underline;">Opción avanzada: forzar afinación manualmente</a>
+        </div>
+        <div id="advancedTuningPanel" class="hide" style="margin-top:10px;">
+          <p class="hint" style="margin-top:0;color:var(--danger);">⚠️ Solo úsalo si el acordeón YA está físicamente en esa afinación (por ejemplo, para arrancar sincronizado antes del primer toque de D13). Forzarlo sin cambiar también el instrumento hace que algunos botones dejen de sonar.</p>
+          <div class="row-btns">
+            <button class="action secondary" data-tuning="GCF-Sol">Sol (GCF)</button>
+            <button class="action secondary" data-tuning="EAD-Mi">Mi (EAD)</button>
+            <button class="action secondary" data-tuning="FBbEb-Fa">Fa (FBbEb)</button>
+          </div>
+        </div>
       </div>
 
       <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
@@ -310,6 +322,10 @@
   </div>
 
   <script>
+  document.getElementById('advancedTuningToggle').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('advancedTuningPanel').classList.toggle('hide');
+  });
   document.querySelectorAll('[data-tuning]').forEach(btn => {
     btn.addEventListener('click', () => {
       const key = btn.getAttribute('data-tuning');
@@ -490,6 +506,9 @@ function applyTuningPreset(key, opts){
   document.querySelectorAll('[data-tuning]').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tuning') === key);
   });
+  document.querySelectorAll('[data-tuning-badge]').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('data-tuning-badge') === key);
+  });
   if(!opts.silent) alert('Afinación "'+TUNING_LABELS[key]+'" aplicada a los 34 botones.');
 }
 
@@ -508,6 +527,9 @@ function applyTuningByIndex(idx){
     });
     document.querySelectorAll('[data-tuning]').forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-tuning') === saved);
+    });
+    document.querySelectorAll('[data-tuning-badge]').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-tuning-badge') === saved);
     });
   }
 })();
