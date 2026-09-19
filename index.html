@@ -39,6 +39,10 @@
     overscroll-behavior:none;
   }
   .wrap{max-width:520px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 16px 100px;}
+  .auth-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000;}
+  .auth-overlay.hide{display:none;}
+  .auth-box{width:100%;max-width:360px;}
+  .auth-box input{width:100%;padding:12px;border-radius:8px;background:var(--bg-panel-2);border:1px solid var(--line);color:var(--ivory);font-size:14px;}
   header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
   h1{
     font-family:'Alfa Slab One', serif;
@@ -223,7 +227,29 @@
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<div id="authOverlay" class="auth-overlay">
+  <div class="auth-box">
+    <h1 style="margin-bottom:4px;">ACORDEONIX</h1>
+    <p class="hint" style="margin-top:0;margin-bottom:20px;">Inicia sesión para guardar tu progreso en la nube</p>
+
+    <button class="action" id="authGoogleBtn" style="width:100%;margin-bottom:14px;">Continuar con Google</button>
+
+    <div style="text-align:center;color:var(--ivory-dim);font-size:12px;margin:10px 0;">— o con correo —</div>
+
+    <input type="email" id="authEmailInput" placeholder="Correo electrónico" style="margin-bottom:10px;">
+    <input type="password" id="authPasswordInput" placeholder="Contraseña" style="margin-bottom:10px;">
+
+    <div id="authError" class="hint" style="color:var(--danger);min-height:16px;margin-bottom:8px;"></div>
+
+    <div class="row-btns">
+      <button class="action secondary" id="authRegisterBtn" style="flex:1;">Crear cuenta</button>
+      <button class="action" id="authLoginBtn" style="flex:1;">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap hide" id="appWrap">
 
   <header>
     <div>
@@ -344,10 +370,20 @@
 
         <button class="action secondary" id="fxReset" style="width:100%;margin-top:14px;">Restablecer efectos</button>
       </div>
+
+      <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Cuenta</div>
+        <div id="accountEmail" class="hint" style="margin-top:0;"></div>
+        <button class="action danger" id="logoutBtn" style="width:100%;margin-top:10px;">Cerrar sesión</button>
+      </div>
     </div>
   </div>
 
   <script>
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    if(!confirm('¿Cerrar sesión? Tu progreso ya quedó guardado en la nube.')) return;
+    auth.signOut();
+  });
   document.getElementById('advancedTuningToggle').addEventListener('click', (e) => {
     e.preventDefault();
     document.getElementById('advancedTuningPanel').classList.toggle('hide');
@@ -843,7 +879,10 @@ const calIds = allButtonIds();
    song = { name, steps:[{id, dir}] }
 ------------------------------------------------------------------*/
 let songs = JSON.parse(localStorage.getItem('acordeonix_songs_v1') || '[]');
-function saveSongs(){ localStorage.setItem('acordeonix_songs_v1', JSON.stringify(songs)); }
+function saveSongs(){
+  localStorage.setItem('acordeonix_songs_v1', JSON.stringify(songs));
+  if(typeof saveSongsToCloud === 'function') saveSongsToCloud();
+}
 
 function descargarJSON(obj, nombreArchivo){
   const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
@@ -1508,5 +1547,101 @@ function synthNoteOffForButton(id){
 </script>
 <script src="lib/libfluidsynth-2.4.6.js"></script>
 <script src="lib/js-synthesizer.min.js"></script>
+
+<!-- ── Firebase: cuentas de usuario + progreso en la nube ── -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDgLjxJj1ahtoOrBEK6DDpNLPfhkIxNw-0",
+  authDomain: "acordeonix-app.firebaseapp.com",
+  projectId: "acordeonix-app",
+  storageBucket: "acordeonix-app.firebasestorage.app",
+  messagingSenderId: "28236285097",
+  appId: "1:28236285097:web:953c99b2ec22fd6b4895b8",
+  measurementId: "G-MP4KXJ33WB"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const authOverlay = document.getElementById('authOverlay');
+const appWrap = document.getElementById('appWrap');
+const authEmailInput = document.getElementById('authEmailInput');
+const authPasswordInput = document.getElementById('authPasswordInput');
+const authError = document.getElementById('authError');
+const authGoogleBtn = document.getElementById('authGoogleBtn');
+const authLoginBtn = document.getElementById('authLoginBtn');
+const authRegisterBtn = document.getElementById('authRegisterBtn');
+
+let currentUser = null;
+
+function showAuthError(err){
+  const map = {
+    'auth/invalid-email': 'Correo inválido.',
+    'auth/user-not-found': 'No existe una cuenta con ese correo.',
+    'auth/wrong-password': 'Contraseña incorrecta.',
+    'auth/email-already-in-use': 'Ya existe una cuenta con ese correo.',
+    'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+    'auth/invalid-credential': 'Correo o contraseña incorrectos.',
+    'auth/missing-email': 'Escribe tu correo.',
+    'auth/missing-password': 'Escribe tu contraseña.',
+  };
+  authError.textContent = map[err.code] || err.message;
+}
+
+authGoogleBtn.addEventListener('click', () => {
+  authError.textContent = '';
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(showAuthError);
+});
+authLoginBtn.addEventListener('click', () => {
+  authError.textContent = '';
+  auth.signInWithEmailAndPassword(authEmailInput.value.trim(), authPasswordInput.value)
+    .catch(showAuthError);
+});
+authRegisterBtn.addEventListener('click', () => {
+  authError.textContent = '';
+  auth.createUserWithEmailAndPassword(authEmailInput.value.trim(), authPasswordInput.value)
+    .catch(showAuthError);
+});
+
+function saveSongsLocalOnly(){
+  localStorage.setItem('acordeonix_songs_v1', JSON.stringify(songs));
+}
+
+async function loadCloudSongs(uid){
+  try{
+    const doc = await db.collection('users').doc(uid).get();
+    if(doc.exists && Array.isArray(doc.data().songs)){
+      songs = doc.data().songs;
+      saveSongsLocalOnly();
+      if(typeof renderSongList === 'function') renderSongList();
+    }
+  } catch(e){ console.warn('No se pudo cargar el progreso de la nube:', e); }
+}
+
+async function saveSongsToCloud(){
+  if(!currentUser) return;
+  try{
+    await db.collection('users').doc(currentUser.uid).set({ songs }, { merge: true });
+  } catch(e){ console.warn('No se pudo guardar el progreso en la nube:', e); }
+}
+
+auth.onAuthStateChanged(async (user) => {
+  currentUser = user;
+  if(user){
+    authOverlay.classList.add('hide');
+    appWrap.classList.remove('hide');
+    const accountEmail = document.getElementById('accountEmail');
+    if(accountEmail) accountEmail.textContent = 'Sesión iniciada: ' + (user.email || 'cuenta de Google');
+    await loadCloudSongs(user.uid);
+  } else {
+    authOverlay.classList.remove('hide');
+    appWrap.classList.add('hide');
+  }
+});
+</script>
 </body>
 </html>
