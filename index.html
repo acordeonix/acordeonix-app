@@ -231,20 +231,20 @@
 <div id="authOverlay" class="auth-overlay">
   <div class="auth-box">
     <h1 style="margin-bottom:4px;">ACORDEONIX</h1>
-    <p class="hint" style="margin-top:0;margin-bottom:20px;">Inicia sesión para guardar tu progreso en la nube</p>
+    <p class="hint" style="margin-top:0;margin-bottom:20px;" data-i18n="auth.subtitle">Inicia sesión para guardar tu progreso en la nube</p>
 
-    <button class="action" id="authGoogleBtn" style="width:100%;margin-bottom:14px;">Continuar con Google</button>
+    <button class="action" id="authGoogleBtn" style="width:100%;margin-bottom:14px;" data-i18n="auth.google">Continuar con Google</button>
 
-    <div style="text-align:center;color:var(--ivory-dim);font-size:12px;margin:10px 0;">— o con correo —</div>
+    <div style="text-align:center;color:var(--ivory-dim);font-size:12px;margin:10px 0;" data-i18n="auth.or">— o con correo —</div>
 
-    <input type="email" id="authEmailInput" placeholder="Correo electrónico" style="margin-bottom:10px;">
-    <input type="password" id="authPasswordInput" placeholder="Contraseña" style="margin-bottom:10px;">
+    <input type="email" id="authEmailInput" placeholder="Correo electrónico" style="margin-bottom:10px;" data-i18n-ph="auth.email.ph">
+    <input type="password" id="authPasswordInput" placeholder="Contraseña" style="margin-bottom:10px;" data-i18n-ph="auth.password.ph">
 
     <div id="authError" class="hint" style="color:var(--danger);min-height:16px;margin-bottom:8px;"></div>
 
     <div class="row-btns">
-      <button class="action secondary" id="authRegisterBtn" style="flex:1;">Crear cuenta</button>
-      <button class="action" id="authLoginBtn" style="flex:1;">Entrar</button>
+      <button class="action secondary" id="authRegisterBtn" style="flex:1;" data-i18n="auth.register">Crear cuenta</button>
+      <button class="action" id="authLoginBtn" style="flex:1;" data-i18n="auth.login">Entrar</button>
     </div>
   </div>
 </div>
@@ -254,25 +254,26 @@
   <header>
     <div>
       <h1>ACORDEONIX</h1>
-      <div class="sub">34 botones · en vivo y práctica de canciones</div>
+      <div class="sub" data-i18n="app.subtitle">34 botones · en vivo y práctica de canciones</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-      <div class="midi-pill" id="midiPill"><span class="dot" id="midiDot"></span><span id="midiLabel">USB: Conectar</span></div>
+      <a href="#" id="headerLogoutBtn" class="hint" style="text-decoration:underline;font-size:11px;" data-i18n="header.logout">Salir</a>
+      <div class="midi-pill" id="midiPill"><span class="dot" id="midiDot"></span><span id="midiLabel" data-i18n="midi.connect">USB: Conectar</span></div>
     </div>
   </header>
 
   <select id="midiSelect" class="hide"></select>
 
   <nav class="tabs">
-    <button data-tab="live" class="active">En vivo</button>
-    <button data-tab="calibrate">Ajustes</button>
-    <button data-tab="songs">Canciones</button>
+    <button data-tab="live" class="active" data-i18n="nav.live">En vivo</button>
+    <button data-tab="calibrate" data-i18n="nav.settings">Ajustes</button>
+    <button data-tab="songs" data-i18n="nav.songs">Canciones</button>
   </nav>
 
   <!-- LIVE TAB -->
   <div id="tab-live" class="tab">
     <div class="panel">
-      <h2>Vista en vivo</h2>
+      <h2 data-i18n="live.title">Vista en vivo</h2>
 
       <div style="margin-bottom:12px;padding:8px 10px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
         <div class="row-btns" style="margin-top:0;">
@@ -281,14 +282,14 @@
           <div class="tuning-badge" data-tuning-badge="FBbEb-Fa">Fa<br><span class="tuning-badge-notes">F-Bb-Eb</span></div>
         </div>
         <div class="row-btns" style="margin-top:6px;">
-          <button class="action secondary" data-board-size="31" style="padding:6px 10px;font-size:12px;">31 botones</button>
-          <button class="action secondary" data-board-size="34" style="padding:6px 10px;font-size:12px;">34 botones</button>
+          <button class="action secondary" data-board-size="31" style="padding:6px 10px;font-size:12px;" data-i18n="live.btn31">31 botones</button>
+          <button class="action secondary" data-board-size="34" style="padding:6px 10px;font-size:12px;" data-i18n="live.btn34">34 botones</button>
         </div>
         <div style="margin-top:6px;">
-          <a href="#" id="advancedTuningToggle" class="hint" style="text-decoration:underline;font-size:11px;">Forzar afinación manualmente</a>
+          <a href="#" id="advancedTuningToggle" class="hint" style="text-decoration:underline;font-size:11px;" data-i18n="live.forceTuning">Forzar afinación manualmente</a>
         </div>
         <div id="advancedTuningPanel" class="hide" style="margin-top:8px;">
-          <p class="hint" style="margin-top:0;color:var(--danger);font-size:11px;">⚠️ Solo úsalo si el acordeón YA está físicamente en esa afinación. Forzarlo sin cambiar también el instrumento hace que algunos botones dejen de sonar.</p>
+          <p class="hint" style="margin-top:0;color:var(--danger);font-size:11px;" data-i18n="live.forceWarning">⚠️ Solo úsalo si el acordeón YA está físicamente en esa afinación. Forzarlo sin cambiar también el instrumento hace que algunos botones dejen de sonar.</p>
           <div class="row-btns">
             <button class="action secondary" data-tuning="GCF-Sol">Sol (GCF)</button>
             <button class="action secondary" data-tuning="EAD-Mi">Mi (EAD)</button>
@@ -298,20 +299,20 @@
       </div>
 
       <div style="margin-bottom:12px;padding:8px 10px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
-        <div style="font-size:11px;color:var(--brass);margin-bottom:6px;">Soundfont</div>
+        <div style="font-size:11px;color:var(--brass);margin-bottom:6px;" data-i18n="live.soundfont">Soundfont</div>
         <div id="liveSf2Slots" class="row-btns" style="margin-top:0;"></div>
         <div id="liveSf2Name" class="hint" style="margin-top:6px;font-size:11px;"></div>
       </div>
 
       <div class="board-frame"><div class="board" id="boardLive"></div></div>
       <div class="legend">
-        <span><i class="swatch push"></i>Abrir fuelle</span>
-        <span><i class="swatch pull"></i>Cerrar fuelle</span>
-        <span><i class="swatch dim"></i>Sin calibrar</span>
+        <span><i class="swatch push"></i><span data-i18n="legend.push">Abrir fuelle</span></span>
+        <span><i class="swatch pull"></i><span data-i18n="legend.pull">Cerrar fuelle</span></span>
+        <span><i class="swatch dim"></i><span data-i18n="legend.uncal">Sin calibrar</span></span>
       </div>
       <div style="margin-top:14px;padding:10px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
-        <div style="font-size:12px;color:var(--brass);margin-bottom:4px;">Depuración MIDI (temporal)</div>
-        <div id="debugLog" style="font-family:monospace;font-size:11px;color:var(--ivory-dim);white-space:pre-wrap;max-height:140px;overflow-y:auto;">Esperando mensajes MIDI…</div>
+        <div style="font-size:12px;color:var(--brass);margin-bottom:4px;" data-i18n="debug.title">Depuración MIDI (temporal)</div>
+        <div id="debugLog" style="font-family:monospace;font-size:11px;color:var(--ivory-dim);white-space:pre-wrap;max-height:140px;overflow-y:auto;" data-i18n="debug.waiting">Esperando mensajes MIDI…</div>
       </div>
     </div>
   </div>
@@ -320,67 +321,289 @@
   <!-- (id interno queda "tab-calibrate" para no romper la navegación; el usuario la ve como "Ajustes") -->
   <div id="tab-calibrate" class="tab hide">
     <div class="panel">
-      <h2>Ajustes</h2>
-      <p class="hint">Ajustes generales de la app y del sonido. La afinación y el tamaño del acordeón se ven arriba, en "En vivo".</p>
+      <h2 data-i18n="settings.title">Ajustes</h2>
+      <p class="hint" data-i18n="settings.intro">Ajustes generales de la app y del sonido. La afinación y el tamaño del acordeón se ven arriba, en "En vivo".</p>
 
       <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
-        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Conexión WiFi (Raspberry Pi)</div>
-        <p class="hint" style="margin-top:0;">Alternativa al USB directo. Tu celular y la Pi deben estar en la misma red WiFi (o conectados al hotspot de la Pi). Ingresa la IP de la Pi — la puedes ver ahí con <code>hostname -I</code>.</p>
-        <input type="text" id="wifiIpInput" placeholder="ej. 192.168.1.42">
-        <button class="action" id="wifiConnectBtn" style="width:100%;margin-top:10px;">Conectar</button>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
-          <span class="dot" id="wifiDot"></span><span id="wifiLabel" class="hint" style="margin:0;">Pi WiFi: Conectar</span>
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;" data-i18n="settings.lang.title">Idioma</div>
+        <div class="row-btns">
+          <button class="action secondary" data-lang="es">Español</button>
+          <button class="action secondary" data-lang="en">English</button>
+          <button class="action secondary" data-lang="pt">Português</button>
         </div>
       </div>
 
       <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
-        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Soundfonts guardados</div>
-        <p class="hint" style="margin-top:0;">Guarda hasta 5 SF2 en el celular y cambia entre ellos con un toque, sin volver a subir el archivo cada vez. Toca una ranura vacía para elegir un archivo.</p>
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;" data-i18n="settings.wifi.title">Conexión WiFi (Raspberry Pi)</div>
+        <p class="hint" style="margin-top:0;" data-i18n="settings.wifi.hint">Alternativa al USB directo. Tu celular y la Pi deben estar en la misma red WiFi (o conectados al hotspot de la Pi). Ingresa la IP de la Pi — la puedes ver ahí con <code>hostname -I</code>.</p>
+        <input type="text" id="wifiIpInput" placeholder="ej. 192.168.1.42" data-i18n-ph="settings.wifi.ipph">
+        <button class="action" id="wifiConnectBtn" style="width:100%;margin-top:10px;" data-i18n="settings.wifi.connect">Conectar</button>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+          <span class="dot" id="wifiDot"></span><span id="wifiLabel" class="hint" style="margin:0;" data-i18n="settings.wifi.status">Pi WiFi: Conectar</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;" data-i18n="settings.sf2.title">Soundfonts guardados</div>
+        <p class="hint" style="margin-top:0;" data-i18n="settings.sf2.hint">Guarda hasta 5 SF2 en el celular y cambia entre ellos con un toque, sin volver a subir el archivo cada vez. Toca una ranura vacía para elegir un archivo.</p>
         <div id="synthStatus" class="hint" style="margin-top:6px;"></div>
         <div id="sf2SlotList" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;"></div>
         <input type="file" id="sf2SlotFileInput" accept=".sf2" class="hide">
       </div>
 
       <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
-        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Efectos de sonido</div>
-        <p class="hint" style="margin-top:0;">Afecta solo el sonido del sintetizador local (pestaña Sonido) — no cambia nada en el acordeón físico.</p>
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;" data-i18n="settings.fx.title">Efectos de sonido</div>
+        <p class="hint" style="margin-top:0;" data-i18n="settings.fx.hint">Afecta solo el sonido del sintetizador local (pestaña Sonido) — no cambia nada en el acordeón físico.</p>
 
         <div style="margin-top:14px;">
-          <label class="hint" style="display:flex;justify-content:space-between;">Reverb (espacio/eco de sala) <span id="fxReverbVal">0%</span></label>
+          <label class="hint" style="display:flex;justify-content:space-between;"><span data-i18n="settings.fx.reverb">Reverb (espacio/eco de sala)</span> <span id="fxReverbVal">0%</span></label>
           <input type="range" id="fxReverb" min="0" max="100" value="0" style="width:100%;">
         </div>
 
         <div style="margin-top:14px;">
-          <label class="hint" style="display:flex;justify-content:space-between;">Eco (delay repetido) <span id="fxEchoVal">0%</span></label>
+          <label class="hint" style="display:flex;justify-content:space-between;"><span data-i18n="settings.fx.echo">Eco (delay repetido)</span> <span id="fxEchoVal">0%</span></label>
           <input type="range" id="fxEcho" min="0" max="100" value="0" style="width:100%;">
         </div>
 
         <div style="margin-top:14px;">
-          <label class="hint" style="display:flex;justify-content:space-between;">Graves <span id="fxBassVal">0 dB</span></label>
+          <label class="hint" style="display:flex;justify-content:space-between;"><span data-i18n="settings.fx.bass">Graves</span> <span id="fxBassVal">0 dB</span></label>
           <input type="range" id="fxBass" min="-12" max="12" value="0" style="width:100%;">
         </div>
         <div style="margin-top:10px;">
-          <label class="hint" style="display:flex;justify-content:space-between;">Medios <span id="fxMidVal">0 dB</span></label>
+          <label class="hint" style="display:flex;justify-content:space-between;"><span data-i18n="settings.fx.mid">Medios</span> <span id="fxMidVal">0 dB</span></label>
           <input type="range" id="fxMid" min="-12" max="12" value="0" style="width:100%;">
         </div>
         <div style="margin-top:10px;">
-          <label class="hint" style="display:flex;justify-content:space-between;">Agudos <span id="fxTrebleVal">0 dB</span></label>
+          <label class="hint" style="display:flex;justify-content:space-between;"><span data-i18n="settings.fx.treble">Agudos</span> <span id="fxTrebleVal">0 dB</span></label>
           <input type="range" id="fxTreble" min="-12" max="12" value="0" style="width:100%;">
         </div>
 
-        <button class="action secondary" id="fxReset" style="width:100%;margin-top:14px;">Restablecer efectos</button>
-      </div>
-
-      <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
-        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Cuenta</div>
-        <div id="accountEmail" class="hint" style="margin-top:0;"></div>
-        <button class="action danger" id="logoutBtn" style="width:100%;margin-top:10px;">Cerrar sesión</button>
+        <button class="action secondary" id="fxReset" style="width:100%;margin-top:14px;" data-i18n="settings.fx.reset">Restablecer efectos</button>
       </div>
     </div>
   </div>
 
   <script>
-  document.getElementById('logoutBtn').addEventListener('click', () => {
+  /* ---------------------------------------------------------------
+     IDIOMA / LANGUAGE / IDIOMA
+  ------------------------------------------------------------------*/
+  const I18N = {
+    es: {
+      'auth.subtitle': 'Inicia sesión para guardar tu progreso en la nube',
+      'auth.google': 'Continuar con Google',
+      'auth.or': '— o con correo —',
+      'auth.email.ph': 'Correo electrónico',
+      'auth.password.ph': 'Contraseña',
+      'auth.register': 'Crear cuenta',
+      'auth.login': 'Entrar',
+      'app.subtitle': '34 botones · en vivo y práctica de canciones',
+      'header.logout': 'Salir',
+      'midi.connect': 'USB: Conectar',
+      'nav.live': 'En vivo',
+      'nav.settings': 'Ajustes',
+      'nav.songs': 'Canciones',
+      'live.title': 'Vista en vivo',
+      'live.btn31': '31 botones',
+      'live.btn34': '34 botones',
+      'live.forceTuning': 'Forzar afinación manualmente',
+      'live.forceWarning': '⚠️ Solo úsalo si el acordeón YA está físicamente en esa afinación. Forzarlo sin cambiar también el instrumento hace que algunos botones dejen de sonar.',
+      'live.soundfont': 'Soundfont',
+      'legend.push': 'Abrir fuelle',
+      'legend.pull': 'Cerrar fuelle',
+      'legend.uncal': 'Sin calibrar',
+      'debug.title': 'Depuración MIDI (temporal)',
+      'debug.waiting': 'Esperando mensajes MIDI…',
+      'settings.title': 'Ajustes',
+      'settings.intro': 'Ajustes generales de la app y del sonido. La afinación y el tamaño del acordeón se ven arriba, en "En vivo".',
+      'settings.lang.title': 'Idioma',
+      'settings.wifi.title': 'Conexión WiFi (Raspberry Pi)',
+      'settings.wifi.hint': 'Alternativa al USB directo. Tu celular y la Pi deben estar en la misma red WiFi (o conectados al hotspot de la Pi). Ingresa la IP de la Pi — la puedes ver ahí con <code>hostname -I</code>.',
+      'settings.wifi.ipph': 'ej. 192.168.1.42',
+      'settings.wifi.connect': 'Conectar',
+      'settings.wifi.status': 'Pi WiFi: Conectar',
+      'settings.sf2.title': 'Soundfonts guardados',
+      'settings.sf2.hint': 'Guarda hasta 5 SF2 en el celular y cambia entre ellos con un toque, sin volver a subir el archivo cada vez. Toca una ranura vacía para elegir un archivo.',
+      'settings.fx.title': 'Efectos de sonido',
+      'settings.fx.hint': 'Afecta solo el sonido del sintetizador local (pestaña Sonido) — no cambia nada en el acordeón físico.',
+      'settings.fx.reverb': 'Reverb (espacio/eco de sala)',
+      'settings.fx.echo': 'Eco (delay repetido)',
+      'settings.fx.bass': 'Graves',
+      'settings.fx.mid': 'Medios',
+      'settings.fx.treble': 'Agudos',
+      'settings.fx.reset': 'Restablecer efectos',
+      'songs.title': 'Tus canciones',
+      'songs.hint': 'Graba una canción tocándola en el acordeón, o abre una guardada para practicar. También puedes exportar canciones como archivo para pasarlas a otro celular u otro ACORDEONIX.',
+      'songs.new': '+ Grabar nueva canción',
+      'songs.import': 'Importar archivo',
+      'songs.exportAll': 'Exportar todas',
+      'record.title': 'Grabar una canción',
+      'record.hint': 'Presiona grabar y luego toca la melodía en tu acordeón, botón por botón. Cada pulsación se captura con su dirección de empuje/jale.',
+      'record.nameph': 'Nombre de la canción (ej. Mezquite)',
+      'diff.easy': 'Fácil', 'diff.medium': 'Media', 'diff.hard': 'Difícil',
+      'record.stepsCount': '0 pasos capturados',
+      'record.undo': 'Deshacer último',
+      'record.toggleStart': 'Iniciar grabación',
+      'record.cancel': 'Cancelar',
+      'record.save': 'Guardar canción',
+      'practice.defaultTitle': 'Canción',
+      'practice.instructionDefault': 'Presiona el botón resaltado',
+      'practice.prev': '◂ Atrás',
+      'practice.skip': 'Saltar ▸',
+      'practice.exit': 'Salir de práctica',
+    },
+    en: {
+      'auth.subtitle': 'Sign in to save your progress to the cloud',
+      'auth.google': 'Continue with Google',
+      'auth.or': '— or with email —',
+      'auth.email.ph': 'Email',
+      'auth.password.ph': 'Password',
+      'auth.register': 'Create account',
+      'auth.login': 'Sign in',
+      'app.subtitle': '34 buttons · live view and song practice',
+      'header.logout': 'Sign out',
+      'midi.connect': 'USB: Connect',
+      'nav.live': 'Live',
+      'nav.settings': 'Settings',
+      'nav.songs': 'Songs',
+      'live.title': 'Live view',
+      'live.btn31': '31 buttons',
+      'live.btn34': '34 buttons',
+      'live.forceTuning': 'Force tuning manually',
+      'live.forceWarning': '⚠️ Only use this if the accordion is ALREADY physically in that tuning. Forcing it without also changing the instrument will make some buttons stop sounding.',
+      'live.soundfont': 'Soundfont',
+      'legend.push': 'Bellows open',
+      'legend.pull': 'Bellows close',
+      'legend.uncal': 'Not calibrated',
+      'debug.title': 'MIDI debug (temporary)',
+      'debug.waiting': 'Waiting for MIDI messages…',
+      'settings.title': 'Settings',
+      'settings.intro': 'General app and sound settings. Tuning and accordion size are shown above, in "Live".',
+      'settings.lang.title': 'Language',
+      'settings.wifi.title': 'WiFi connection (Raspberry Pi)',
+      'settings.wifi.hint': "Alternative to direct USB. Your phone and the Pi must be on the same WiFi network (or connected to the Pi's hotspot). Enter the Pi's IP — you can see it there with <code>hostname -I</code>.",
+      'settings.wifi.ipph': 'e.g. 192.168.1.42',
+      'settings.wifi.connect': 'Connect',
+      'settings.wifi.status': 'Pi WiFi: Connect',
+      'settings.sf2.title': 'Saved soundfonts',
+      'settings.sf2.hint': 'Save up to 5 SF2 files on the phone and switch between them with one tap, without re-uploading each time. Tap an empty slot to choose a file.',
+      'settings.fx.title': 'Sound effects',
+      'settings.fx.hint': "Only affects the local synthesizer's sound (Sound tab) — it doesn't change anything on the physical accordion.",
+      'settings.fx.reverb': 'Reverb (room space/echo)',
+      'settings.fx.echo': 'Echo (repeat delay)',
+      'settings.fx.bass': 'Bass',
+      'settings.fx.mid': 'Mid',
+      'settings.fx.treble': 'Treble',
+      'settings.fx.reset': 'Reset effects',
+      'songs.title': 'Your songs',
+      'songs.hint': 'Record a song by playing it on the accordion, or open a saved one to practice. You can also export songs as a file to move them to another phone or another ACORDEONIX.',
+      'songs.new': '+ Record new song',
+      'songs.import': 'Import file',
+      'songs.exportAll': 'Export all',
+      'record.title': 'Record a song',
+      'record.hint': 'Press record and then play the melody on your accordion, button by button. Each press is captured with its push/pull direction.',
+      'record.nameph': 'Song name (e.g. Mezquite)',
+      'diff.easy': 'Easy', 'diff.medium': 'Medium', 'diff.hard': 'Hard',
+      'record.stepsCount': '0 steps captured',
+      'record.undo': 'Undo last',
+      'record.toggleStart': 'Start recording',
+      'record.cancel': 'Cancel',
+      'record.save': 'Save song',
+      'practice.defaultTitle': 'Song',
+      'practice.instructionDefault': 'Press the highlighted button',
+      'practice.prev': '◂ Back',
+      'practice.skip': 'Skip ▸',
+      'practice.exit': 'Exit practice',
+    },
+    pt: {
+      'auth.subtitle': 'Entre para salvar seu progresso na nuvem',
+      'auth.google': 'Continuar com Google',
+      'auth.or': '— ou com e-mail —',
+      'auth.email.ph': 'E-mail',
+      'auth.password.ph': 'Senha',
+      'auth.register': 'Criar conta',
+      'auth.login': 'Entrar',
+      'app.subtitle': '34 botões · visualização ao vivo e prática de músicas',
+      'header.logout': 'Sair',
+      'midi.connect': 'USB: Conectar',
+      'nav.live': 'Ao vivo',
+      'nav.settings': 'Ajustes',
+      'nav.songs': 'Músicas',
+      'live.title': 'Visualização ao vivo',
+      'live.btn31': '31 botões',
+      'live.btn34': '34 botões',
+      'live.forceTuning': 'Forçar afinação manualmente',
+      'live.forceWarning': '⚠️ Use somente se o acordeão JÁ estiver fisicamente nessa afinação. Forçar sem também trocar o instrumento faz alguns botões pararem de soar.',
+      'live.soundfont': 'Soundfont',
+      'legend.push': 'Abrindo o fole',
+      'legend.pull': 'Fechando o fole',
+      'legend.uncal': 'Não calibrado',
+      'debug.title': 'Depuração MIDI (temporário)',
+      'debug.waiting': 'Aguardando mensagens MIDI…',
+      'settings.title': 'Ajustes',
+      'settings.intro': 'Ajustes gerais do app e do som. A afinação e o tamanho do acordeão aparecem acima, em "Ao vivo".',
+      'settings.lang.title': 'Idioma',
+      'settings.wifi.title': 'Conexão WiFi (Raspberry Pi)',
+      'settings.wifi.hint': 'Alternativa ao USB direto. Seu celular e o Pi devem estar na mesma rede WiFi (ou conectados ao hotspot do Pi). Digite o IP do Pi — você pode vê-lo lá com <code>hostname -I</code>.',
+      'settings.wifi.ipph': 'ex. 192.168.1.42',
+      'settings.wifi.connect': 'Conectar',
+      'settings.wifi.status': 'Pi WiFi: Conectar',
+      'settings.sf2.title': 'Soundfonts salvos',
+      'settings.sf2.hint': 'Salve até 5 SF2 no celular e alterne entre eles com um toque, sem precisar enviar o arquivo de novo. Toque em um espaço vazio para escolher um arquivo.',
+      'settings.fx.title': 'Efeitos de som',
+      'settings.fx.hint': 'Afeta apenas o som do sintetizador local (aba Som) — não muda nada no acordeão físico.',
+      'settings.fx.reverb': 'Reverb (espaço/eco de sala)',
+      'settings.fx.echo': 'Eco (delay repetido)',
+      'settings.fx.bass': 'Graves',
+      'settings.fx.mid': 'Médios',
+      'settings.fx.treble': 'Agudos',
+      'settings.fx.reset': 'Redefinir efeitos',
+      'songs.title': 'Suas músicas',
+      'songs.hint': 'Grave uma música tocando no acordeão, ou abra uma salva para praticar. Você também pode exportar músicas como arquivo para passar para outro celular ou outro ACORDEONIX.',
+      'songs.new': '+ Gravar nova música',
+      'songs.import': 'Importar arquivo',
+      'songs.exportAll': 'Exportar todas',
+      'record.title': 'Gravar uma música',
+      'record.hint': 'Aperte gravar e depois toque a melodia no seu acordeão, botão por botão. Cada toque é capturado com sua direção de abrir/fechar.',
+      'record.nameph': 'Nome da música (ex. Mezquite)',
+      'diff.easy': 'Fácil', 'diff.medium': 'Média', 'diff.hard': 'Difícil',
+      'record.stepsCount': '0 passos capturados',
+      'record.undo': 'Desfazer último',
+      'record.toggleStart': 'Iniciar gravação',
+      'record.cancel': 'Cancelar',
+      'record.save': 'Salvar música',
+      'practice.defaultTitle': 'Música',
+      'practice.instructionDefault': 'Pressione o botão destacado',
+      'practice.prev': '◂ Voltar',
+      'practice.skip': 'Pular ▸',
+      'practice.exit': 'Sair da prática',
+    },
+  };
+
+  function applyLanguage(lang){
+    if(!I18N[lang]) lang = 'es';
+    localStorage.setItem('acordeonix_lang', lang);
+    const dict = I18N[lang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if(dict[key] != null) el.innerHTML = dict[key];
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      const key = el.getAttribute('data-i18n-ph');
+      if(dict[key] != null) el.setAttribute('placeholder', dict[key]);
+    });
+    document.querySelectorAll('[data-lang]').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+    });
+  }
+  document.querySelectorAll('[data-lang]').forEach(btn => {
+    btn.addEventListener('click', () => applyLanguage(btn.getAttribute('data-lang')));
+  });
+  document.addEventListener('DOMContentLoaded', () => {
+    applyLanguage(localStorage.getItem('acordeonix_lang') || 'es');
+  });
+
+  document.getElementById('headerLogoutBtn').addEventListener('click', (e) => {
+    e.preventDefault();
     if(!confirm('¿Cerrar sesión? Tu progreso ya quedó guardado en la nube.')) return;
     auth.signOut();
   });
@@ -404,53 +627,53 @@
   <div id="tab-songs" class="tab hide">
 
     <div class="panel" id="songLibraryPanel">
-      <h2>Tus canciones</h2>
-      <p class="hint">Graba una canción tocándola en el acordeón, o abre una guardada para practicar. También puedes exportar canciones como archivo para pasarlas a otro celular u otro ACORDEONIX.</p>
+      <h2 data-i18n="songs.title">Tus canciones</h2>
+      <p class="hint" data-i18n="songs.hint">Graba una canción tocándola en el acordeón, o abre una guardada para practicar. También puedes exportar canciones como archivo para pasarlas a otro celular u otro ACORDEONIX.</p>
       <div class="song-list" id="songList"></div>
-      <button class="action" id="newSongBtn" style="margin-top:12px;width:100%;">+ Grabar nueva canción</button>
+      <button class="action" id="newSongBtn" style="margin-top:12px;width:100%;" data-i18n="songs.new">+ Grabar nueva canción</button>
       <div class="row-btns" style="margin-top:8px;">
-        <button class="action secondary" id="importSongBtn">Importar archivo</button>
-        <button class="action secondary" id="exportAllBtn">Exportar todas</button>
+        <button class="action secondary" id="importSongBtn" data-i18n="songs.import">Importar archivo</button>
+        <button class="action secondary" id="exportAllBtn" data-i18n="songs.exportAll">Exportar todas</button>
       </div>
       <input type="file" id="importSongInput" accept="application/json" multiple class="hide">
     </div>
 
     <div class="panel hide" id="recordPanel">
-      <h2><span class="rec-dot hide" id="recDot"></span><span id="recTitle">Grabar una canción</span></h2>
-      <p class="hint">Presiona grabar y luego toca la melodía en tu acordeón, botón por botón. Cada pulsación se captura con su dirección de empuje/jale.</p>
+      <h2><span class="rec-dot hide" id="recDot"></span><span id="recTitle" data-i18n="record.title">Grabar una canción</span></h2>
+      <p class="hint" data-i18n="record.hint">Presiona grabar y luego toca la melodía en tu acordeón, botón por botón. Cada pulsación se captura con su dirección de empuje/jale.</p>
       <div class="board-frame"><div class="board" id="boardRec"></div></div>
-      <input type="text" id="songNameInput" placeholder="Nombre de la canción (ej. Mezquite)">
+      <input type="text" id="songNameInput" placeholder="Nombre de la canción (ej. Mezquite)" data-i18n-ph="record.nameph">
       <div class="row-btns" id="recDifficultyRow" style="margin-top:8px;">
-        <button class="action secondary difficulty-opt active" data-difficulty="1">Fácil</button>
-        <button class="action secondary difficulty-opt" data-difficulty="2">Media</button>
-        <button class="action secondary difficulty-opt" data-difficulty="3">Difícil</button>
+        <button class="action secondary difficulty-opt active" data-difficulty="1" data-i18n="diff.easy">Fácil</button>
+        <button class="action secondary difficulty-opt" data-difficulty="2" data-i18n="diff.medium">Media</button>
+        <button class="action secondary difficulty-opt" data-difficulty="3" data-i18n="diff.hard">Difícil</button>
       </div>
       <div class="step-tape" id="stepTape"></div>
-      <div class="stat-row"><span id="stepCount">0 pasos capturados</span><span id="lastNote">—</span></div>
+      <div class="stat-row"><span id="stepCount" data-i18n="record.stepsCount">0 pasos capturados</span><span id="lastNote">—</span></div>
       <div class="row-btns">
-        <button class="action secondary" id="recUndo">Deshacer último</button>
-        <button class="action" id="recToggle">Iniciar grabación</button>
+        <button class="action secondary" id="recUndo" data-i18n="record.undo">Deshacer último</button>
+        <button class="action" id="recToggle" data-i18n="record.toggleStart">Iniciar grabación</button>
       </div>
       <div class="row-btns" style="margin-top:8px;">
-        <button class="action secondary" id="recCancel">Cancelar</button>
-        <button class="action" id="recSave">Guardar canción</button>
+        <button class="action secondary" id="recCancel" data-i18n="record.cancel">Cancelar</button>
+        <button class="action" id="recSave" data-i18n="record.save">Guardar canción</button>
       </div>
     </div>
 
     <div class="panel hide" id="practicePanel">
       <div class="practice-header">
-        <div class="title" id="practiceTitle">Canción</div>
+        <div class="title" id="practiceTitle" data-i18n="practice.defaultTitle">Canción</div>
         <div class="prog" id="practiceProg">0 / 0</div>
       </div>
       <div class="bar"><div id="practiceBar" style="width:0%;"></div></div>
       <div class="board-frame"><div class="board" id="boardPractice"></div></div>
-      <div class="cal-instruction" id="practiceInstruction" style="margin-top:10px;">Presiona el botón resaltado</div>
+      <div class="cal-instruction" id="practiceInstruction" style="margin-top:10px;" data-i18n="practice.instructionDefault">Presiona el botón resaltado</div>
       <div class="row-btns">
-        <button class="action secondary" id="practicePrev">◂ Atrás</button>
-        <button class="action secondary" id="practiceSkip">Saltar ▸</button>
+        <button class="action secondary" id="practicePrev" data-i18n="practice.prev">◂ Atrás</button>
+        <button class="action secondary" id="practiceSkip" data-i18n="practice.skip">Saltar ▸</button>
       </div>
       <div class="row-btns" style="margin-top:8px;">
-        <button class="action danger" id="practiceExit">Salir de práctica</button>
+        <button class="action danger" id="practiceExit" data-i18n="practice.exit">Salir de práctica</button>
       </div>
     </div>
 
@@ -1634,8 +1857,6 @@ auth.onAuthStateChanged(async (user) => {
   if(user){
     authOverlay.classList.add('hide');
     appWrap.classList.remove('hide');
-    const accountEmail = document.getElementById('accountEmail');
-    if(accountEmail) accountEmail.textContent = 'Sesión iniciada: ' + (user.email || 'cuenta de Google');
     await loadCloudSongs(user.uid);
   } else {
     authOverlay.classList.remove('hide');
