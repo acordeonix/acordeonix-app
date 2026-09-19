@@ -673,6 +673,19 @@
       <button class="action secondary difficulty-opt" data-difficulty="2" data-i18n="diff.medium">Media</button>
       <button class="action secondary difficulty-opt" data-difficulty="3" data-i18n="diff.hard">Difícil</button>
     </div>
+    <div style="margin-top:10px;padding:10px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+      <label class="hint" style="display:block;margin-bottom:6px;">Tempo (BPM) — marca el ritmo mientras grabas y luego se exige al practicar</label>
+      <div class="row-btns" style="margin-top:0;">
+        <input type="number" id="recBpm" min="30" max="240" value="90" style="flex:1;">
+        <button class="action secondary" id="recBpmPreview" style="flex:1;">▶ Escuchar</button>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding:10px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+      <label class="hint" style="display:block;margin-bottom:6px;">Pista de acompañamiento (opcional) — MP3 o WAV, suena de fondo al practicar</label>
+      <input type="file" id="recTrackFile" accept="audio/*">
+      <div id="recTrackName" class="hint" style="margin-top:6px;"></div>
+      <button class="action secondary" id="recTrackClear" style="width:100%;margin-top:8px;display:none;">Quitar pista</button>
+    </div>
     <div id="recSharedRow" class="hide" style="margin-top:10px;padding:10px;background:#0c0a08;border-radius:8px;border:1px solid var(--brass);">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ivory-dim);">
         <input type="checkbox" id="recSharedCheck" style="width:auto;">
@@ -697,6 +710,8 @@
       <div class="prog" id="practiceProg">0 / 0</div>
     </div>
     <div class="bar"><div id="practiceBar" style="width:0%;"></div></div>
+    <div id="practiceScoreRow" class="hide hint" style="margin-top:4px;text-align:center;">✓ 0 &nbsp; · &nbsp; ✗ 0</div>
+    <audio id="practiceTrackAudio" loop style="display:none;"></audio>
     <div class="board-frame"><div class="board" id="boardPractice"></div></div>
     <div class="cal-instruction" id="practiceInstruction" style="margin-top:10px;" data-i18n="practice.instructionDefault">Presiona el botón resaltado</div>
     <div class="row-btns">
@@ -1123,6 +1138,9 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
     const pp = document.getElementById('practicePanel');
     if(rp) rp.classList.add('hide');
     if(pp) pp.classList.add('hide');
+    if(typeof stopMetronome === 'function') stopMetronome();
+    if(typeof stopPracticeMetronome === 'function') stopPracticeMetronome();
+    if(typeof stopPracticeTrack === 'function') stopPracticeTrack();
   });
 });
 
@@ -1232,7 +1250,7 @@ function renderFilteredList(containerEl, category){
     expBtn.style.marginLeft = '6px';
     expBtn.textContent = 'Exportar';
     expBtn.addEventListener('click', () => {
-      descargarJSON({acordeonixSong:1, name:song.name, steps:song.steps}, nombreArchivoSeguro(song.name)+'.acordeonix.json');
+      descargarJSON({acordeonixSong:1, name:song.name, steps:song.steps, category:song.category||'song', difficulty:song.difficulty||1, bpm:song.bpm||null}, nombreArchivoSeguro(song.name)+'.acordeonix.json');
     });
     const btnWrap = document.createElement('div');
     btnWrap.style.display='flex';
@@ -1296,7 +1314,13 @@ importSongInput.addEventListener('change', () => {
         const lista = Array.isArray(data) ? data : [data];
         lista.forEach(item => {
           if(item && item.name && Array.isArray(item.steps)){
-            songs.push({name:item.name, steps:item.steps});
+            songs.push({
+              name:item.name, steps:item.steps,
+              category: item.category || 'song',
+              difficulty: item.difficulty || 1,
+              bpm: item.bpm || null,
+              completed: false,
+            });
           }
         });
         saveSongs();
@@ -1311,7 +1335,7 @@ importSongInput.addEventListener('change', () => {
 });
 exportAllBtn.addEventListener('click', () => {
   if(songs.length===0){ alert('Todavía no tienes canciones guardadas.'); return; }
-  descargarJSON(songs.map(s=>({acordeonixSong:1, name:s.name, steps:s.steps})), 'acordeonix-canciones.json');
+  descargarJSON(songs.map(s=>({acordeonixSong:1, name:s.name, steps:s.steps, category:s.category||'song', difficulty:s.difficulty||1, bpm:s.bpm||null})), 'acordeonix-canciones.json');
 });
 
 /* --- recording --- */
@@ -1329,6 +1353,54 @@ const stepCount = document.getElementById('stepCount');
 const lastNote = document.getElementById('lastNote');
 const songNameInput = document.getElementById('songNameInput');
 
+/* ---------------------------------------------------------------
+   METRÓNOMO — usado tanto al grabar (marcar el tiempo) como al
+   practicar (exigirlo). Motor de audio propio, independiente del
+   sintetizador SF2 (así funciona aunque no haya soundfont cargado).
+------------------------------------------------------------------*/
+let metroCtx = null;
+let metroTimer = null;
+let metroBeatCount = 0;
+
+function metroEnsureCtx(){
+  if(!metroCtx) metroCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(metroCtx.state === 'suspended') metroCtx.resume();
+  return metroCtx;
+}
+function metroClick(accent){
+  const ctx = metroEnsureCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.frequency.value = accent ? 1500 : 1000;
+  gain.gain.setValueAtTime(0.25, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 0.05);
+}
+function startMetronome(bpm, onBeat){
+  stopMetronome();
+  metroEnsureCtx();
+  const beatMs = 60000/bpm;
+  metroBeatCount = 0;
+  const tick = () => {
+    metroClick(metroBeatCount % 4 === 0);
+    if(onBeat) onBeat(metroBeatCount);
+    metroBeatCount++;
+  };
+  tick();
+  metroTimer = setInterval(tick, beatMs);
+}
+function stopMetronome(){
+  if(metroTimer){ clearInterval(metroTimer); metroTimer = null; }
+}
+document.getElementById('recBpmPreview').addEventListener('click', () => {
+  const bpm = parseInt(document.getElementById('recBpm').value,10) || 90;
+  let count = 0;
+  startMetronome(bpm, () => { count++; if(count>=4) stopMetronome(); });
+});
+
 const recState = { active:false, steps:[] };
 
 /* Botones presionados casi al mismo tiempo (dentro de esta ventana)
@@ -1336,6 +1408,15 @@ const recState = { active:false, steps:[] };
    acordeón a veces se tocan varios botones juntos. */
 const CHORD_WINDOW_MS = 70;
 let chordBuffer = null;
+
+// Reloj de grabación consciente de pausas: solo cuenta el tiempo en
+// que la grabación estuvo realmente activa.
+let recBpmValue = 90;
+let recActiveElapsedMs = 0;
+let recActiveStartPerf = null;
+function recElapsedMs(){
+  return recActiveElapsedMs + (recActiveStartPerf != null ? performance.now()-recActiveStartPerf : 0);
+}
 
 // A qué pestaña regresar al salir de grabar/practicar — 'songs' o
 // 'exercises', según de dónde haya venido el usuario.
@@ -1346,6 +1427,9 @@ function showPanel(which){
   recordPanel.classList.toggle('hide', which!=='record');
   practicePanel.classList.toggle('hide', which!=='practice');
   if(which === 'library'){
+    stopMetronome();
+    stopPracticeMetronome();
+    stopPracticeTrack();
     document.querySelector('nav.tabs button[data-tab="'+libraryReturnTab+'"]').click();
   } else {
     document.querySelectorAll('.tab').forEach(t => t.classList.add('hide'));
@@ -1359,6 +1443,13 @@ function openRecordPanel(category, returnTab){
   recState.active = false;
   recState.steps = [];
   chordBuffer = null;
+  recActiveElapsedMs = 0;
+  recActiveStartPerf = null;
+  document.getElementById('recBpm').value = 90;
+  recTrackFile = null;
+  document.getElementById('recTrackFile').value = '';
+  document.getElementById('recTrackName').textContent = '';
+  document.getElementById('recTrackClear').style.display = 'none';
   songNameInput.value = '';
   renderTape();
   recToggle.textContent = 'Iniciar grabación';
@@ -1367,45 +1458,73 @@ function openRecordPanel(category, returnTab){
   showPanel('record');
 }
 
+let recTrackFile = null;
+document.getElementById('recTrackFile').addEventListener('change', () => {
+  recTrackFile = document.getElementById('recTrackFile').files[0] || null;
+  document.getElementById('recTrackName').textContent = recTrackFile ? recTrackFile.name : '';
+  document.getElementById('recTrackClear').style.display = recTrackFile ? 'block' : 'none';
+});
+document.getElementById('recTrackClear').addEventListener('click', () => {
+  recTrackFile = null;
+  document.getElementById('recTrackFile').value = '';
+  document.getElementById('recTrackName').textContent = '';
+  document.getElementById('recTrackClear').style.display = 'none';
+});
+
 newSongBtn.addEventListener('click', () => openRecordPanel('song', 'songs'));
 document.getElementById('newScaleBtn').addEventListener('click', () => openRecordPanel('scale', 'exercises'));
 document.getElementById('newFingeringBtn').addEventListener('click', () => openRecordPanel('fingering', 'exercises'));
 
-recCancel.addEventListener('click', () => { recState.active=false; showPanel('library'); });
+recCancel.addEventListener('click', () => { recState.active=false; stopMetronome(); showPanel('library'); });
 
 recToggle.addEventListener('click', () => {
   recState.active = !recState.active;
   recToggle.textContent = recState.active ? 'Pausar grabación' : 'Reanudar grabación';
   recDot.classList.toggle('hide', !recState.active);
+  if(recState.active){
+    if(recActiveStartPerf == null && recActiveElapsedMs === 0){
+      // primera vez que arranca esta grabación: fija el BPM elegido
+      recBpmValue = parseInt(document.getElementById('recBpm').value,10) || 90;
+    }
+    recActiveStartPerf = performance.now();
+    startMetronome(recBpmValue);
+  } else {
+    if(recActiveStartPerf != null){
+      recActiveElapsedMs += performance.now() - recActiveStartPerf;
+      recActiveStartPerf = null;
+    }
+    stopMetronome();
+  }
 });
 
 function recCaptureById(id, dir){
   if(chordBuffer){
     clearTimeout(chordBuffer.timer);
   } else {
-    chordBuffer = { notes: [] };
+    chordBuffer = { notes: [], beat: Math.round(recElapsedMs() / (60000/recBpmValue)) };
   }
   chordBuffer.notes.push({id, dir});
   chordBuffer.timer = setTimeout(flushChord, CHORD_WINDOW_MS);
 }
 function flushChord(){
   if(chordBuffer && chordBuffer.notes.length){
-    recState.steps.push(chordBuffer.notes);
+    recState.steps.push({notes: chordBuffer.notes, beat: chordBuffer.beat});
     renderTape();
   }
   chordBuffer = null;
 }
 function renderTape(){
   stepTape.innerHTML = '';
-  recState.steps.forEach(notes => {
+  recState.steps.forEach(step => {
+    const notes = step.notes;
     const chip = document.createElement('span');
     chip.className = 'chip ' + (notes[0] ? notes[0].dir : '');
-    chip.textContent = notes.map(n => n.id.replace('row','R')+(n.dir==='push'?' ↑':' ↓')).join(' + ');
+    chip.textContent = notes.map(n => n.id.replace('row','R')+(n.dir==='push'?' ↑':' ↓')).join(' + ') + ' · t'+step.beat;
     stepTape.appendChild(chip);
   });
   stepCount.textContent = recState.steps.length + ' pasos capturados';
   const last = recState.steps[recState.steps.length-1];
-  lastNote.textContent = last ? last.map(n=>n.id).join(' + ') : '—';
+  lastNote.textContent = last ? last.notes.map(n=>n.id).join(' + ') : '—';
 }
 recUndo.addEventListener('click', () => { recState.steps.pop(); renderTape(); });
 
@@ -1429,6 +1548,7 @@ document.querySelectorAll('.difficulty-opt').forEach(btn => {
 
 recSave.addEventListener('click', async () => {
   flushChord();
+  stopMetronome();
   const name = songNameInput.value.trim();
   if(!name){ alert('Primero ponle un nombre a la canción.'); return; }
   if(recState.steps.length===0){ alert('Graba al menos una nota primero.'); return; }
@@ -1437,18 +1557,38 @@ recSave.addEventListener('click', async () => {
 
   if(shouldShare){
     try{
-      const id = await saveToCatalog({name, steps: recState.steps, difficulty: recDifficulty, category: recCategory});
-      songs.push({id, name, steps: recState.steps, difficulty: recDifficulty, category: recCategory, shared:true, completed:false});
+      const id = await saveToCatalog({name, steps: recState.steps, difficulty: recDifficulty, category: recCategory, bpm: recBpmValue});
+      let trackUrl = null;
+      if(recTrackFile){
+        try{
+          trackUrl = await uploadTrackToStorage(id, recTrackFile);
+          await db.collection('catalog').doc(id).set({trackUrl}, {merge:true});
+        } catch(e){ alert('La canción se guardó, pero la pista de audio no se pudo subir: '+e.message); }
+      }
+      songs.push({id, name, steps: recState.steps, difficulty: recDifficulty, category: recCategory, bpm: recBpmValue, trackUrl, shared:true, completed:false});
       saveSongsLocalOnly();
     } catch(e){ alert('No se pudo guardar en el catálogo compartido: '+e.message); return; }
   } else {
-    songs.push({name, steps: recState.steps, difficulty: recDifficulty, category: recCategory, completed: false});
+    const song = {name, steps: recState.steps, difficulty: recDifficulty, category: recCategory, bpm: recBpmValue, completed: false};
+    if(recTrackFile){
+      const trackId = 'track_'+Date.now();
+      try{
+        const buf = await recTrackFile.arrayBuffer();
+        await saveTrackLocal(trackId, buf, recTrackFile.type, recTrackFile.name);
+        song.trackId = trackId;
+      } catch(e){ alert('La canción se guardó, pero la pista de audio no se pudo guardar en el celular.'); }
+    }
+    songs.push(song);
     saveSongs();
   }
 
   recState.active = false;
   recDifficulty = 1;
   recCategory = 'song';
+  recTrackFile = null;
+  document.getElementById('recTrackFile').value = '';
+  document.getElementById('recTrackName').textContent = '';
+  document.getElementById('recTrackClear').style.display = 'none';
   if(shareCheck) shareCheck.checked = false;
   document.querySelectorAll('.difficulty-opt').forEach(b => b.classList.toggle('active', b.getAttribute('data-difficulty')==='1'));
   renderSongList();
@@ -1456,11 +1596,72 @@ recSave.addEventListener('click', async () => {
 });
 
 /* --- practice / follow mode --- */
-const practiceState = { active:false, songIdx:-1, stepIdx:0, pressed:new Set() };
+const practiceState = { active:false, songIdx:-1, stepIdx:0, pressed:new Set(), timed:false, hits:0, misses:0, startPerf:0 };
 const practiceTitle = document.getElementById('practiceTitle');
 const practiceProg = document.getElementById('practiceProg');
 const practiceBar = document.getElementById('practiceBar');
 const practiceInstruction = document.getElementById('practiceInstruction');
+const practiceScoreRow = document.getElementById('practiceScoreRow');
+const practicePrevBtn = document.getElementById('practicePrev');
+const practiceSkipBtn = document.getElementById('practiceSkip');
+
+// Compatibilidad: canciones grabadas antes de esta función guardan
+// cada paso como un arreglo suelto de {id,dir}; las nuevas lo guardan
+// como {notes:[...], beat:N}. Estas 2 funciones leen cualquiera de
+// las 2 formas sin romper nada de lo ya grabado.
+function stepNotes(step){ return Array.isArray(step) ? step : step.notes; }
+function stepBeat(step){ return Array.isArray(step) ? null : step.beat; }
+
+const PRACTICE_TOLERANCE_MS = 220;
+let practiceTickTimer = null;
+
+function stepTargetTime(song, idx){
+  const beatMs = 60000/song.bpm;
+  return practiceState.startPerf + (stepBeat(song.steps[idx])||0)*beatMs;
+}
+function stopPracticeMetronome(){
+  stopMetronome();
+  if(practiceTickTimer){ clearInterval(practiceTickTimer); practiceTickTimer = null; }
+}
+function practiceTimedTick(){
+  if(!practiceState.active || !practiceState.timed) return;
+  const song = songs[practiceState.songIdx];
+  if(practiceState.stepIdx >= song.steps.length) return;
+  const target = stepTargetTime(song, practiceState.stepIdx);
+  if(performance.now() > target + PRACTICE_TOLERANCE_MS){
+    practiceState.misses++;
+    practiceState.stepIdx++;
+    practiceState.pressed = new Set();
+    practiceRender();
+  }
+}
+
+// ── Pista de acompañamiento (opcional) durante la práctica ─────
+const practiceTrackAudio = document.getElementById('practiceTrackAudio');
+let practiceTrackObjectUrl = null;
+async function startPracticeTrack(song){
+  stopPracticeTrack();
+  if(song.trackUrl){
+    practiceTrackAudio.src = song.trackUrl;
+    practiceTrackAudio.play().catch(()=>{});
+  } else if(song.trackId){
+    try{
+      const rec = await loadTrackLocal(song.trackId);
+      if(rec){
+        const blob = new Blob([rec.data], {type: rec.mimeType || 'audio/mpeg'});
+        practiceTrackObjectUrl = URL.createObjectURL(blob);
+        practiceTrackAudio.src = practiceTrackObjectUrl;
+        practiceTrackAudio.play().catch(()=>{});
+      }
+    } catch(e){ console.warn('No se pudo cargar la pista local:', e); }
+  }
+}
+function stopPracticeTrack(){
+  practiceTrackAudio.pause();
+  practiceTrackAudio.removeAttribute('src');
+  practiceTrackAudio.load();
+  if(practiceTrackObjectUrl){ URL.revokeObjectURL(practiceTrackObjectUrl); practiceTrackObjectUrl = null; }
+}
 
 function startPractice(idx){
   const song = songs[idx];
@@ -1470,8 +1671,26 @@ function startPractice(idx){
   practiceState.songIdx = idx;
   practiceState.stepIdx = 0;
   practiceState.pressed = new Set();
+  practiceState.hits = 0;
+  practiceState.misses = 0;
   practiceTitle.textContent = song.name;
   showPanel('practice');
+  startPracticeTrack(song);
+
+  // Solo hay práctica cronometrada si la canción se grabó con BPM y
+  // el formato nuevo de pasos con tiempo (canciones viejas no lo
+  // tienen, y siguen funcionando en el modo libre de siempre).
+  practiceState.timed = !!(song.bpm && song.steps.length && !Array.isArray(song.steps[0]));
+  practiceScoreRow.classList.toggle('hide', !practiceState.timed);
+  practicePrevBtn.classList.toggle('hide', practiceState.timed);
+  practiceSkipBtn.classList.toggle('hide', practiceState.timed);
+
+  stopPracticeMetronome();
+  if(practiceState.timed){
+    practiceState.startPerf = performance.now();
+    startMetronome(song.bpm);
+    practiceTickTimer = setInterval(practiceTimedTick, 30);
+  }
   practiceRender();
 }
 function practiceRender(){
@@ -1479,9 +1698,14 @@ function practiceRender(){
   const ids = allButtonIds();
   ids.forEach(id => boardPractice[id].classList.remove('target','target-done','expect-push','expect-pull'));
   if(practiceState.stepIdx >= song.steps.length){
+    stopPracticeMetronome();
+    stopPracticeTrack();
     practiceInstruction.textContent = '🎉 ¡Canción completa!';
     practiceProg.textContent = song.steps.length+' / '+song.steps.length;
     practiceBar.style.width = '100%';
+    if(practiceState.timed){
+      practiceScoreRow.textContent = '✓ '+practiceState.hits+'  ·  ✗ '+practiceState.misses;
+    }
     if(!song.completed){
       song.completed = true;
       markSongCompleted(song);
@@ -1494,7 +1718,7 @@ function practiceRender(){
     }
     return;
   }
-  const notes = song.steps[practiceState.stepIdx];
+  const notes = stepNotes(song.steps[practiceState.stepIdx]);
   notes.forEach(n => {
     const done = practiceState.pressed.has(n.id+'|'+n.dir);
     boardPractice[n.id].classList.add(done ? 'target-done' : 'target', 'expect-'+n.dir);
@@ -1505,29 +1729,43 @@ function practiceRender(){
     + notes.map(n => n.id+' ('+(n.dir==='push'?'abrir':'cerrar')+')').join(', ');
   practiceProg.textContent = practiceState.stepIdx+' / '+song.steps.length;
   practiceBar.style.width = (100*practiceState.stepIdx/song.steps.length)+'%';
+  if(practiceState.timed){
+    practiceScoreRow.textContent = '✓ '+practiceState.hits+'  ·  ✗ '+practiceState.misses;
+  }
 }
 function practiceCheckById(id, dir){
   const song = songs[practiceState.songIdx];
   if(practiceState.stepIdx >= song.steps.length) return;
-  const notes = song.steps[practiceState.stepIdx];
+  const notes = stepNotes(song.steps[practiceState.stepIdx]);
   const match = notes.some(n => n.id===id && n.dir===dir);
   if(!match) return;
+
+  if(practiceState.timed){
+    const target = stepTargetTime(song, practiceState.stepIdx);
+    if(Math.abs(performance.now() - target) > PRACTICE_TOLERANCE_MS) return; // fuera de tiempo: se ignora (el fallo lo marca el reloj)
+  }
+
   practiceState.pressed.add(id+'|'+dir);
   const allDone = notes.every(n => practiceState.pressed.has(n.id+'|'+n.dir));
   if(allDone){
+    if(practiceState.timed) practiceState.hits++;
     practiceState.stepIdx++;
     practiceState.pressed = new Set();
   }
   practiceRender();
 }
-document.getElementById('practicePrev').addEventListener('click', () => {
+practicePrevBtn.addEventListener('click', () => {
+  if(practiceState.timed) return;
   if(practiceState.stepIdx>0){ practiceState.stepIdx--; practiceState.pressed=new Set(); practiceRender(); }
 });
-document.getElementById('practiceSkip').addEventListener('click', () => {
+practiceSkipBtn.addEventListener('click', () => {
+  if(practiceState.timed) return;
   practiceState.stepIdx++; practiceState.pressed=new Set(); practiceRender();
 });
 document.getElementById('practiceExit').addEventListener('click', () => {
   practiceState.active = false;
+  stopPracticeMetronome();
+  stopPracticeTrack();
   renderSongList();
   showPanel('library');
 });
@@ -1555,6 +1793,40 @@ let synthReady = false;
 // Notas activas por botón, para poder apagarlas exactamente aunque
 // el usuario recalibre a media sesión.
 const activeSynthNotes = {};
+
+/* ---------------------------------------------------------------
+   PISTAS DE ACOMPAÑAMIENTO — canciones/ejercicios personales
+   (privados) guardan su audio localmente en el celular. Las
+   compartidas (catálogo) usan Firebase Storage — ver más abajo.
+------------------------------------------------------------------*/
+const TRACKS_DB_NAME = 'acordeonix_tracks_db';
+const TRACKS_STORE = 'tracks';
+function tracksOpenDb(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(TRACKS_DB_NAME, 1);
+    req.onupgradeneeded = () => { req.result.createObjectStore(TRACKS_STORE); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function saveTrackLocal(trackId, arrayBuffer, mimeType, name){
+  const db = await tracksOpenDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(TRACKS_STORE, 'readwrite');
+    tx.objectStore(TRACKS_STORE).put({data: arrayBuffer, mimeType, name}, trackId);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function loadTrackLocal(trackId){
+  const db = await tracksOpenDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(TRACKS_STORE, 'readonly');
+    const req = tx.objectStore(TRACKS_STORE).get(trackId);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
 
 function sf2OpenDb(){
   return new Promise((resolve, reject) => {
@@ -1902,6 +2174,7 @@ function synthNoteOffForButton(id){
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyDgljxJj1ahtoOrBEK6DDpNLPfhkIxNw-0",
@@ -1915,6 +2188,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage();
 
 const authOverlay = document.getElementById('authOverlay');
 const appWrap = document.getElementById('appWrap');
@@ -1982,6 +2256,8 @@ async function loadCloudSongs(uid){
           steps: d.steps,
           category: d.category || 'song',
           difficulty: d.difficulty || 1,
+          bpm: d.bpm || null,
+          trackUrl: d.trackUrl || null,
           shared: true,
           completed: !!progress[doc.id],
         };
@@ -2021,6 +2297,15 @@ async function saveProgressToCloud(catalogId, completed){
 async function saveToCatalog(item){
   const ref = await db.collection('catalog').add(item);
   return ref.id;
+}
+
+// Sube el archivo de audio de una canción/ejercicio compartido a
+// Firebase Storage y devuelve la URL pública de descarga.
+async function uploadTrackToStorage(catalogId, file){
+  const ext = (file.name.split('.').pop() || 'mp3').toLowerCase();
+  const ref = storage.ref().child('catalog-tracks/'+catalogId+'.'+ext);
+  await ref.put(file);
+  return await ref.getDownloadURL();
 }
 
 function updateSharedRowVisibility(){
