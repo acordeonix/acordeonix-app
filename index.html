@@ -268,6 +268,7 @@
     <button data-tab="live" class="active" data-i18n="nav.live">En vivo</button>
     <button data-tab="calibrate" data-i18n="nav.settings">Ajustes</button>
     <button data-tab="songs" data-i18n="nav.songs">Canciones</button>
+    <button data-tab="exercises">Ejercicios</button>
   </nav>
 
   <!-- LIVE TAB -->
@@ -638,45 +639,73 @@
       <input type="file" id="importSongInput" accept="application/json" multiple class="hide">
     </div>
 
-    <div class="panel hide" id="recordPanel">
-      <h2><span class="rec-dot hide" id="recDot"></span><span id="recTitle" data-i18n="record.title">Grabar una canción</span></h2>
-      <p class="hint" data-i18n="record.hint">Presiona grabar y luego toca la melodía en tu acordeón, botón por botón. Cada pulsación se captura con su dirección de empuje/jale.</p>
-      <div class="board-frame"><div class="board" id="boardRec"></div></div>
-      <input type="text" id="songNameInput" placeholder="Nombre de la canción (ej. Mezquite)" data-i18n-ph="record.nameph">
-      <div class="row-btns" id="recDifficultyRow" style="margin-top:8px;">
-        <button class="action secondary difficulty-opt active" data-difficulty="1" data-i18n="diff.easy">Fácil</button>
-        <button class="action secondary difficulty-opt" data-difficulty="2" data-i18n="diff.medium">Media</button>
-        <button class="action secondary difficulty-opt" data-difficulty="3" data-i18n="diff.hard">Difícil</button>
-      </div>
-      <div class="step-tape" id="stepTape"></div>
-      <div class="stat-row"><span id="stepCount" data-i18n="record.stepsCount">0 pasos capturados</span><span id="lastNote">—</span></div>
-      <div class="row-btns">
-        <button class="action secondary" id="recUndo" data-i18n="record.undo">Deshacer último</button>
-        <button class="action" id="recToggle" data-i18n="record.toggleStart">Iniciar grabación</button>
-      </div>
-      <div class="row-btns" style="margin-top:8px;">
-        <button class="action secondary" id="recCancel" data-i18n="record.cancel">Cancelar</button>
-        <button class="action" id="recSave" data-i18n="record.save">Guardar canción</button>
-      </div>
-    </div>
+  </div>
 
-    <div class="panel hide" id="practicePanel">
-      <div class="practice-header">
-        <div class="title" id="practiceTitle" data-i18n="practice.defaultTitle">Canción</div>
-        <div class="prog" id="practiceProg">0 / 0</div>
-      </div>
-      <div class="bar"><div id="practiceBar" style="width:0%;"></div></div>
-      <div class="board-frame"><div class="board" id="boardPractice"></div></div>
-      <div class="cal-instruction" id="practiceInstruction" style="margin-top:10px;" data-i18n="practice.instructionDefault">Presiona el botón resaltado</div>
-      <div class="row-btns">
-        <button class="action secondary" id="practicePrev" data-i18n="practice.prev">◂ Atrás</button>
-        <button class="action secondary" id="practiceSkip" data-i18n="practice.skip">Saltar ▸</button>
-      </div>
-      <div class="row-btns" style="margin-top:8px;">
-        <button class="action danger" id="practiceExit" data-i18n="practice.exit">Salir de práctica</button>
-      </div>
-    </div>
+  <!-- EXERCISES TAB -->
+  <div id="tab-exercises" class="tab hide">
+    <div class="panel" id="exercisesLibraryPanel">
+      <h2>Ejercicios</h2>
+      <p class="hint">Practica escalas y patrones de digitación. Las que trae ACORDEONIX de fábrica las ven todos los usuarios; también puedes grabar las tuyas propias, solo para ti.</p>
 
+      <h3 style="margin-top:18px;margin-bottom:8px;color:var(--brass);font-size:14px;">Escalas</h3>
+      <div class="song-list" id="scaleList"></div>
+      <button class="action secondary" id="newScaleBtn" style="margin-top:10px;width:100%;">+ Grabar escala</button>
+
+      <h3 style="margin-top:22px;margin-bottom:8px;color:var(--brass);font-size:14px;">Digitación</h3>
+      <div class="song-list" id="fingeringList"></div>
+      <button class="action secondary" id="newFingeringBtn" style="margin-top:10px;width:100%;">+ Grabar patrón de digitación</button>
+    </div>
+  </div>
+
+  <!-- RECORD / PRACTICE — compartidos entre Canciones y Ejercicios -->
+  <div class="panel hide" id="recordPanel">
+    <h2><span class="rec-dot hide" id="recDot"></span><span id="recTitle" data-i18n="record.title">Grabar una canción</span></h2>
+    <p class="hint" data-i18n="record.hint">Presiona grabar y luego toca la melodía en tu acordeón, botón por botón. Cada pulsación se captura con su dirección de empuje/jale.</p>
+    <div class="board-frame"><div class="board" id="boardRec"></div></div>
+    <input type="text" id="songNameInput" placeholder="Nombre de la canción (ej. Mezquite)" data-i18n-ph="record.nameph">
+    <div class="row-btns" id="recCategoryRow" style="margin-top:8px;">
+      <button class="action secondary category-opt active" data-category="song">Canción</button>
+      <button class="action secondary category-opt" data-category="scale">Escala</button>
+      <button class="action secondary category-opt" data-category="fingering">Digitación</button>
+    </div>
+    <div class="row-btns" id="recDifficultyRow" style="margin-top:8px;">
+      <button class="action secondary difficulty-opt active" data-difficulty="1" data-i18n="diff.easy">Fácil</button>
+      <button class="action secondary difficulty-opt" data-difficulty="2" data-i18n="diff.medium">Media</button>
+      <button class="action secondary difficulty-opt" data-difficulty="3" data-i18n="diff.hard">Difícil</button>
+    </div>
+    <div id="recSharedRow" class="hide" style="margin-top:10px;padding:10px;background:#0c0a08;border-radius:8px;border:1px solid var(--brass);">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ivory-dim);">
+        <input type="checkbox" id="recSharedCheck" style="width:auto;">
+        Compartir con todos los usuarios (catálogo oficial de ACORDEONIX)
+      </label>
+    </div>
+    <div class="step-tape" id="stepTape"></div>
+    <div class="stat-row"><span id="stepCount" data-i18n="record.stepsCount">0 pasos capturados</span><span id="lastNote">—</span></div>
+    <div class="row-btns">
+      <button class="action secondary" id="recUndo" data-i18n="record.undo">Deshacer último</button>
+      <button class="action" id="recToggle" data-i18n="record.toggleStart">Iniciar grabación</button>
+    </div>
+    <div class="row-btns" style="margin-top:8px;">
+      <button class="action secondary" id="recCancel" data-i18n="record.cancel">Cancelar</button>
+      <button class="action" id="recSave" data-i18n="record.save">Guardar canción</button>
+    </div>
+  </div>
+
+  <div class="panel hide" id="practicePanel">
+    <div class="practice-header">
+      <div class="title" id="practiceTitle" data-i18n="practice.defaultTitle">Canción</div>
+      <div class="prog" id="practiceProg">0 / 0</div>
+    </div>
+    <div class="bar"><div id="practiceBar" style="width:0%;"></div></div>
+    <div class="board-frame"><div class="board" id="boardPractice"></div></div>
+    <div class="cal-instruction" id="practiceInstruction" style="margin-top:10px;" data-i18n="practice.instructionDefault">Presiona el botón resaltado</div>
+    <div class="row-btns">
+      <button class="action secondary" id="practicePrev" data-i18n="practice.prev">◂ Atrás</button>
+      <button class="action secondary" id="practiceSkip" data-i18n="practice.skip">Saltar ▸</button>
+    </div>
+    <div class="row-btns" style="margin-top:8px;">
+      <button class="action danger" id="practiceExit" data-i18n="practice.exit">Salir de práctica</button>
+    </div>
   </div>
 
 </div>
@@ -1087,6 +1116,13 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
     btn.classList.add('active');
     document.querySelectorAll('.tab').forEach(t=>t.classList.add('hide'));
     document.getElementById('tab-'+btn.dataset.tab).classList.remove('hide');
+    // Grabar/Practicar viven fuera de las pestañas normales (se
+    // comparten entre Canciones y Ejercicios) — si el usuario navega
+    // manualmente, los ocultamos para no dejarlos "flotando" encima.
+    const rp = document.getElementById('recordPanel');
+    const pp = document.getElementById('practicePanel');
+    if(rp) rp.classList.add('hide');
+    if(pp) pp.classList.add('hide');
   });
 });
 
@@ -1107,6 +1143,16 @@ function saveSongs(){
   if(typeof saveSongsToCloud === 'function') saveSongsToCloud();
 }
 
+// Al completar una canción/ejercicio: si es del catálogo compartido,
+// el progreso se guarda por separado (una marca personal, no se toca
+// el documento compartido); si es personal, se guarda como siempre.
+function markSongCompleted(song){
+  saveSongs();
+  if(song.shared && typeof saveProgressToCloud === 'function'){
+    saveProgressToCloud(song.id, true);
+  }
+}
+
 function descargarJSON(obj, nombreArchivo){
   const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1123,38 +1169,54 @@ function nombreArchivoSeguro(nombre){
 }
 
 const songListEl = document.getElementById('songList');
+const scaleListEl = document.getElementById('scaleList');
+const fingeringListEl = document.getElementById('fingeringList');
+
+const ADMIN_EMAIL = 'info@acordeonixs.com';
+function isAdmin(){ return !!(window.currentUser && window.currentUser.email === ADMIN_EMAIL); }
 
 const DIFFICULTY_LABELS = {1:'Fácil', 2:'Media', 3:'Difícil'};
+const EMPTY_LIST_MSG = {
+  song: 'Aún no hay canciones — graba la primera abajo.',
+  scale: 'Aún no hay escalas — graba la primera abajo.',
+  fingering: 'Aún no hay patrones de digitación — graba el primero abajo.',
+};
 
 function isSongUnlocked(song){
   const diff = song.difficulty || 1;
   if(diff <= 1) return true;
-  return songs.some(s => (s.difficulty||1) === diff-1 && s.completed);
+  const cat = song.category || 'song';
+  // El desbloqueo por nivel es independiente por categoría: completar
+  // una canción fácil no desbloquea una escala media, por ejemplo.
+  return songs.some(s => (s.category||'song')===cat && (s.difficulty||1) === diff-1 && s.completed);
 }
 
-function renderSongList(){
-  songListEl.innerHTML = '';
-  if(songs.length===0){
+function renderFilteredList(containerEl, category){
+  if(!containerEl) return;
+  const list = songs.filter(s => (s.category||'song') === category);
+  containerEl.innerHTML = '';
+  if(list.length===0){
     const p = document.createElement('p');
     p.className = 'hint';
-    p.textContent = 'Aún no hay canciones — graba la primera abajo.';
-    songListEl.appendChild(p);
+    p.textContent = EMPTY_LIST_MSG[category];
+    containerEl.appendChild(p);
     return;
   }
-  songs.forEach((song, idx) => {
+  list.forEach(song => {
+    const idx = songs.indexOf(song);
     const diff = song.difficulty || 1;
     const unlocked = isSongUnlocked(song);
     const row = document.createElement('div');
     row.className = 'song-row';
     if(!unlocked) row.style.opacity = '0.5';
-    const badges = (song.completed ? ' · ✓ Completada' : '') + ' · ' + DIFFICULTY_LABELS[diff];
+    const badges = (song.shared ? ' · 🌐 Oficial' : '') + (song.completed ? ' · ✓ Completada' : '') + ' · ' + DIFFICULTY_LABELS[diff];
     row.innerHTML = `<div><div class="name">${unlocked ? '' : '🔒 '}${song.name}</div><div class="meta">${song.steps.length} pasos${badges}</div></div>`;
     if(!unlocked){
       const lockMsg = document.createElement('div');
       lockMsg.className = 'hint';
       lockMsg.style.marginTop = '2px';
-      lockMsg.textContent = 'Completa una canción de nivel "'+DIFFICULTY_LABELS[diff-1]+'" para desbloquear esta.';
-      songListEl.appendChild(row);
+      lockMsg.textContent = 'Completa una de nivel "'+DIFFICULTY_LABELS[diff-1]+'" en esta misma categoría para desbloquear esta.';
+      containerEl.appendChild(row);
       row.appendChild(lockMsg);
       return;
     }
@@ -1172,26 +1234,45 @@ function renderSongList(){
     expBtn.addEventListener('click', () => {
       descargarJSON({acordeonixSong:1, name:song.name, steps:song.steps}, nombreArchivoSeguro(song.name)+'.acordeonix.json');
     });
-    const delBtn = document.createElement('button');
-    delBtn.className = 'go';
-    delBtn.style.background = 'transparent';
-    delBtn.style.color = 'var(--danger)';
-    delBtn.style.border = '1px solid var(--danger)';
-    delBtn.style.marginLeft = '6px';
-    delBtn.textContent = 'Eliminar';
-    delBtn.addEventListener('click', () => {
-      if(confirm('¿Eliminar "'+song.name+'"?')){ songs.splice(idx,1); saveSongs(); renderSongList(); }
-    });
     const btnWrap = document.createElement('div');
     btnWrap.style.display='flex';
     btnWrap.style.flexWrap='wrap';
     btnWrap.style.gap='4px';
     btnWrap.appendChild(goBtn);
     btnWrap.appendChild(expBtn);
-    btnWrap.appendChild(delBtn);
+    // Solo se puede borrar: contenido propio (personal), o contenido
+    // del catálogo compartido si quien tiene sesión es el admin.
+    if(!song.shared || isAdmin()){
+      const delBtn = document.createElement('button');
+      delBtn.className = 'go';
+      delBtn.style.background = 'transparent';
+      delBtn.style.color = 'var(--danger)';
+      delBtn.style.border = '1px solid var(--danger)';
+      delBtn.style.marginLeft = '6px';
+      delBtn.textContent = 'Eliminar';
+      delBtn.addEventListener('click', async () => {
+        if(!confirm('¿Eliminar "'+song.name+'"?')) return;
+        if(song.shared){
+          try{ await db.collection('catalog').doc(song.id).delete(); } catch(e){ alert('No se pudo eliminar del catálogo: '+e.message); return; }
+        }
+        songs.splice(idx,1);
+        saveSongs();
+        renderSongList();
+      });
+      btnWrap.appendChild(delBtn);
+    }
     row.appendChild(btnWrap);
-    songListEl.appendChild(row);
+    containerEl.appendChild(row);
   });
+}
+
+// renderSongList() queda como el punto de refresco único: actualiza
+// las 3 listas (canciones, escalas, digitación) a la vez, así que
+// todo el código existente que ya la llama sigue funcionando igual.
+function renderSongList(){
+  renderFilteredList(songListEl, 'song');
+  renderFilteredList(scaleListEl, 'scale');
+  renderFilteredList(fingeringListEl, 'fingering');
 }
 renderSongList();
 
@@ -1256,13 +1337,25 @@ const recState = { active:false, steps:[] };
 const CHORD_WINDOW_MS = 70;
 let chordBuffer = null;
 
+// A qué pestaña regresar al salir de grabar/practicar — 'songs' o
+// 'exercises', según de dónde haya venido el usuario.
+let libraryReturnTab = 'songs';
+
 function showPanel(which){
-  songLibraryPanel.classList.toggle('hide', which!=='library');
+  if(songLibraryPanel) songLibraryPanel.classList.toggle('hide', which!=='library');
   recordPanel.classList.toggle('hide', which!=='record');
   practicePanel.classList.toggle('hide', which!=='practice');
+  if(which === 'library'){
+    document.querySelector('nav.tabs button[data-tab="'+libraryReturnTab+'"]').click();
+  } else {
+    document.querySelectorAll('.tab').forEach(t => t.classList.add('hide'));
+  }
 }
 
-newSongBtn.addEventListener('click', () => {
+function openRecordPanel(category, returnTab){
+  recCategory = category;
+  libraryReturnTab = returnTab;
+  document.querySelectorAll('.category-opt').forEach(b => b.classList.toggle('active', b.getAttribute('data-category')===category));
   recState.active = false;
   recState.steps = [];
   chordBuffer = null;
@@ -1270,8 +1363,14 @@ newSongBtn.addEventListener('click', () => {
   renderTape();
   recToggle.textContent = 'Iniciar grabación';
   recDot.classList.add('hide');
+  updateSharedRowVisibility();
   showPanel('record');
-});
+}
+
+newSongBtn.addEventListener('click', () => openRecordPanel('song', 'songs'));
+document.getElementById('newScaleBtn').addEventListener('click', () => openRecordPanel('scale', 'exercises'));
+document.getElementById('newFingeringBtn').addEventListener('click', () => openRecordPanel('fingering', 'exercises'));
+
 recCancel.addEventListener('click', () => { recState.active=false; showPanel('library'); });
 
 recToggle.addEventListener('click', () => {
@@ -1310,6 +1409,15 @@ function renderTape(){
 }
 recUndo.addEventListener('click', () => { recState.steps.pop(); renderTape(); });
 
+// ── Categoría al grabar (Canción / Escala / Digitación) ─────
+let recCategory = 'song';
+document.querySelectorAll('.category-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    recCategory = btn.getAttribute('data-category');
+    document.querySelectorAll('.category-opt').forEach(b => b.classList.toggle('active', b===btn));
+  });
+});
+
 // ── Dificultad al grabar (Fácil / Media / Difícil) ──────────
 let recDifficulty = 1;
 document.querySelectorAll('.difficulty-opt').forEach(btn => {
@@ -1319,15 +1427,29 @@ document.querySelectorAll('.difficulty-opt').forEach(btn => {
   });
 });
 
-recSave.addEventListener('click', () => {
+recSave.addEventListener('click', async () => {
   flushChord();
   const name = songNameInput.value.trim();
   if(!name){ alert('Primero ponle un nombre a la canción.'); return; }
   if(recState.steps.length===0){ alert('Graba al menos una nota primero.'); return; }
-  songs.push({name, steps: recState.steps, difficulty: recDifficulty, completed: false});
-  saveSongs();
+  const shareCheck = document.getElementById('recSharedCheck');
+  const shouldShare = isAdmin() && shareCheck && shareCheck.checked;
+
+  if(shouldShare){
+    try{
+      const id = await saveToCatalog({name, steps: recState.steps, difficulty: recDifficulty, category: recCategory});
+      songs.push({id, name, steps: recState.steps, difficulty: recDifficulty, category: recCategory, shared:true, completed:false});
+      saveSongsLocalOnly();
+    } catch(e){ alert('No se pudo guardar en el catálogo compartido: '+e.message); return; }
+  } else {
+    songs.push({name, steps: recState.steps, difficulty: recDifficulty, category: recCategory, completed: false});
+    saveSongs();
+  }
+
   recState.active = false;
   recDifficulty = 1;
+  recCategory = 'song';
+  if(shareCheck) shareCheck.checked = false;
   document.querySelectorAll('.difficulty-opt').forEach(b => b.classList.toggle('active', b.getAttribute('data-difficulty')==='1'));
   renderSongList();
   showPanel('library');
@@ -1341,11 +1463,14 @@ const practiceBar = document.getElementById('practiceBar');
 const practiceInstruction = document.getElementById('practiceInstruction');
 
 function startPractice(idx){
+  const song = songs[idx];
+  const cat = song.category || 'song';
+  libraryReturnTab = (cat === 'scale' || cat === 'fingering') ? 'exercises' : 'songs';
   practiceState.active = true;
   practiceState.songIdx = idx;
   practiceState.stepIdx = 0;
   practiceState.pressed = new Set();
-  practiceTitle.textContent = songs[idx].name;
+  practiceTitle.textContent = song.name;
   showPanel('practice');
   practiceRender();
 }
@@ -1359,9 +1484,11 @@ function practiceRender(){
     practiceBar.style.width = '100%';
     if(!song.completed){
       song.completed = true;
-      saveSongs();
-      const newlyUnlocked = songs.filter(s => (s.difficulty||1) === (song.difficulty||1)+1);
-      if(newlyUnlocked.length>0 && !songs.some(s => (s.difficulty||1)===(song.difficulty||1)+1 && s.completed)){
+      markSongCompleted(song);
+      const cat = song.category || 'song';
+      const nextDiff = (song.difficulty||1)+1;
+      const newlyUnlocked = songs.filter(s => (s.category||'song')===cat && (s.difficulty||1) === nextDiff);
+      if(newlyUnlocked.length>0 && !songs.some(s => (s.category||'song')===cat && (s.difficulty||1)===nextDiff && s.completed)){
         practiceInstruction.textContent += ' Nuevo nivel desbloqueado.';
       }
     }
@@ -1798,7 +1925,7 @@ const authGoogleBtn = document.getElementById('authGoogleBtn');
 const authLoginBtn = document.getElementById('authLoginBtn');
 const authRegisterBtn = document.getElementById('authRegisterBtn');
 
-let currentUser = null;
+window.currentUser = null;
 
 function showAuthError(err){
   const map = {
@@ -1834,26 +1961,79 @@ function saveSongsLocalOnly(){
   localStorage.setItem('acordeonix_songs_v1', JSON.stringify(songs));
 }
 
+// Descarga el catálogo compartido (canciones/ejercicios oficiales
+// que puso el admin) y lo combina con las personales del usuario +
+// su propio progreso guardado sobre el contenido compartido.
 async function loadCloudSongs(uid){
   try{
-    const doc = await db.collection('users').doc(uid).get();
-    if(doc.exists && Array.isArray(doc.data().songs)){
-      songs = doc.data().songs;
-      saveSongsLocalOnly();
-      if(typeof renderSongList === 'function') renderSongList();
-    }
+    const userDoc = await db.collection('users').doc(uid).get();
+    const data = userDoc.exists ? userDoc.data() : {};
+    const personalSongs = Array.isArray(data.songs) ? data.songs : [];
+    const progress = data.progress || {};
+
+    let catalogSongs = [];
+    try{
+      const catalogSnap = await db.collection('catalog').get();
+      catalogSongs = catalogSnap.docs.map(doc => {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          name: d.name,
+          steps: d.steps,
+          category: d.category || 'song',
+          difficulty: d.difficulty || 1,
+          shared: true,
+          completed: !!progress[doc.id],
+        };
+      });
+    } catch(e){ console.warn('No se pudo cargar el catálogo compartido:', e); }
+
+    songs = [...personalSongs, ...catalogSongs];
+    saveSongsLocalOnly();
+    if(typeof renderSongList === 'function') renderSongList();
+    updateSharedRowVisibility();
   } catch(e){ console.warn('No se pudo cargar el progreso de la nube:', e); }
 }
 
+// Solo las canciones/ejercicios PERSONALES se guardan en el
+// documento del usuario — el contenido compartido vive aparte, en
+// "catalog", y no se debe duplicar ahí.
 async function saveSongsToCloud(){
-  if(!currentUser) return;
+  if(!window.currentUser) return;
   try{
-    await db.collection('users').doc(currentUser.uid).set({ songs }, { merge: true });
+    const personalOnly = songs.filter(s => !s.shared);
+    await db.collection('users').doc(window.currentUser.uid).set({ songs: personalOnly }, { merge: true });
   } catch(e){ console.warn('No se pudo guardar el progreso en la nube:', e); }
 }
 
+// Progreso personal sobre un elemento del catálogo compartido (no
+// modifica el catálogo en sí, solo la marca de "completado" de este
+// usuario para ese elemento).
+async function saveProgressToCloud(catalogId, completed){
+  if(!window.currentUser) return;
+  try{
+    await db.collection('users').doc(window.currentUser.uid)
+      .set({ ['progress.'+catalogId]: completed }, { merge: true });
+  } catch(e){ console.warn('No se pudo guardar el progreso del catálogo:', e); }
+}
+
+// Guarda un nuevo elemento en el catálogo compartido (solo admin).
+async function saveToCatalog(item){
+  const ref = await db.collection('catalog').add(item);
+  return ref.id;
+}
+
+function updateSharedRowVisibility(){
+  const row = document.getElementById('recSharedRow');
+  const check = document.getElementById('recSharedCheck');
+  if(!row) return;
+  const admin = isAdmin();
+  row.classList.toggle('hide', !admin);
+  if(!admin && check) check.checked = false;
+}
+
 auth.onAuthStateChanged(async (user) => {
-  currentUser = user;
+  window.currentUser = user;
   if(user){
     authOverlay.classList.add('hide');
     appWrap.classList.remove('hide');
