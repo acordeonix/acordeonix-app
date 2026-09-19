@@ -169,7 +169,16 @@
   }
   button.action.secondary{background:var(--bg-panel-2);color:var(--ivory-dim);border:1px solid var(--line);}
   button.action.secondary.active{background:var(--brass);color:#14110f;border-color:var(--brass);font-weight:600;}
-  .tuning-badge{flex:1;text-align:center;padding:8px 10px;border-radius:8px;font-size:13px;background:var(--bg-panel-2);color:var(--ivory-dim);border:1px solid var(--line);}
+  .tuning-badge{flex:1;text-align:center;padding:8px 10px;border-radius:8px;font-size:13px;background:var(--bg-panel-2);color:var(--ivory-dim);border:1px solid var(--line);line-height:1.3;}
+  .tuning-badge-notes{font-size:10px;opacity:0.7;font-weight:400;}
+  .sf2-slot-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:8px;background:var(--bg-panel-2);border:1px solid var(--line);cursor:pointer;}
+  .sf2-slot-row.active{border-color:var(--brass);background:rgba(198,154,58,0.12);}
+  .sf2-slot-label{font-size:13px;color:var(--ivory-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  .sf2-slot-row.active .sf2-slot-label{color:var(--brass);font-weight:600;}
+  .sf2-slot-del{background:transparent;border:none;color:var(--danger);font-size:16px;padding:4px 8px;cursor:pointer;flex-shrink:0;}
+  .sf2-mini-slot{flex:1;text-align:center;padding:6px 3px;border-radius:6px;font-size:10px;font-weight:600;background:var(--bg-panel-2);color:var(--ivory-dim);border:1px solid var(--line);cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .sf2-mini-slot.active{background:var(--brass);color:#14110f;border-color:var(--brass);}
+  .sf2-mini-slot.empty{opacity:0.45;}
   .tuning-badge.active{background:var(--brass);color:#14110f;border-color:var(--brass);font-weight:600;}
   button.action.danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
   button.action:disabled{opacity:0.4;}
@@ -223,31 +232,14 @@
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
       <div class="midi-pill" id="midiPill"><span class="dot" id="midiDot"></span><span id="midiLabel">USB: Conectar</span></div>
-      <div class="midi-pill" id="wifiPill"><span class="dot" id="wifiDot"></span><span id="wifiLabel">Pi WiFi: Conectar</span></div>
-      <div class="midi-pill" id="synthPill"><span class="dot" id="synthDot"></span><span id="synthLabel">Sonido: Cargar SF2</span></div>
     </div>
   </header>
 
   <select id="midiSelect" class="hide"></select>
 
-  <div class="panel hide" id="wifiPanel">
-    <h2>Conectar a la Pi por WiFi</h2>
-    <p class="hint">Tu celular y la Pi deben estar en la misma red WiFi (o conectados al hotspot de la Pi). Ingresa la IP de la Pi — la puedes ver en la Pi con <code>hostname -I</code>.</p>
-    <input type="text" id="wifiIpInput" placeholder="ej. 192.168.1.42">
-    <button class="action" id="wifiConnectBtn" style="width:100%;margin-top:10px;">Conectar</button>
-  </div>
-
-  <div class="panel hide" id="synthPanel">
-    <h2>Sintetizador (sonido local)</h2>
-    <p class="hint">Carga un archivo SF2 desde tu celular. Se guarda en el dispositivo para que no tengas que volver a elegirlo cada vez que abras la app. El volumen y el sonido salen directo del altavoz/audífonos del celular — no necesitas la Raspberry Pi.</p>
-    <input type="file" id="sf2FileInput" accept=".sf2">
-    <div id="synthStatus" class="hint" style="margin-top:8px;"></div>
-    <button class="action" id="synthForgetBtn" style="width:100%;margin-top:10px;">Olvidar SF2 guardado</button>
-  </div>
-
   <nav class="tabs">
     <button data-tab="live" class="active">En vivo</button>
-    <button data-tab="calibrate">Calibrar</button>
+    <button data-tab="calibrate">Ajustes</button>
     <button data-tab="songs">Canciones</button>
   </nav>
 
@@ -255,7 +247,36 @@
   <div id="tab-live" class="tab">
     <div class="panel">
       <h2>Vista en vivo</h2>
-      <p class="hint">Los botones se iluminan verde al abrir el fuelle y rojo al cerrarlo, según la dirección del fuelle. Los botones opacos aún no están calibrados — visita la pestaña Calibrar.</p>
+
+      <div style="margin-bottom:12px;padding:8px 10px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+        <div class="row-btns" style="margin-top:0;">
+          <div class="tuning-badge" data-tuning-badge="GCF-Sol">Sol<br><span class="tuning-badge-notes">G-C-F</span></div>
+          <div class="tuning-badge" data-tuning-badge="EAD-Mi">Mi<br><span class="tuning-badge-notes">E-A-D</span></div>
+          <div class="tuning-badge" data-tuning-badge="FBbEb-Fa">Fa<br><span class="tuning-badge-notes">F-Bb-Eb</span></div>
+        </div>
+        <div class="row-btns" style="margin-top:6px;">
+          <button class="action secondary" data-board-size="31" style="padding:6px 10px;font-size:12px;">31 botones</button>
+          <button class="action secondary" data-board-size="34" style="padding:6px 10px;font-size:12px;">34 botones</button>
+        </div>
+        <div style="margin-top:6px;">
+          <a href="#" id="advancedTuningToggle" class="hint" style="text-decoration:underline;font-size:11px;">Forzar afinación manualmente</a>
+        </div>
+        <div id="advancedTuningPanel" class="hide" style="margin-top:8px;">
+          <p class="hint" style="margin-top:0;color:var(--danger);font-size:11px;">⚠️ Solo úsalo si el acordeón YA está físicamente en esa afinación. Forzarlo sin cambiar también el instrumento hace que algunos botones dejen de sonar.</p>
+          <div class="row-btns">
+            <button class="action secondary" data-tuning="GCF-Sol">Sol (GCF)</button>
+            <button class="action secondary" data-tuning="EAD-Mi">Mi (EAD)</button>
+            <button class="action secondary" data-tuning="FBbEb-Fa">Fa (FBbEb)</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;padding:8px 10px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+        <div style="font-size:11px;color:var(--brass);margin-bottom:6px;">Soundfont</div>
+        <div id="liveSf2Slots" class="row-btns" style="margin-top:0;"></div>
+        <div id="liveSf2Name" class="hint" style="margin-top:6px;font-size:11px;"></div>
+      </div>
+
       <div class="board-frame"><div class="board" id="boardLive"></div></div>
       <div class="legend">
         <span><i class="swatch push"></i>Abrir fuelle</span>
@@ -270,53 +291,58 @@
   </div>
 
   <!-- CALIBRATE TAB -->
+  <!-- (id interno queda "tab-calibrate" para no romper la navegación; el usuario la ve como "Ajustes") -->
   <div id="tab-calibrate" class="tab hide">
     <div class="panel">
-      <h2>Asistente de calibración</h2>
-      <p class="hint">Cada botón envía una nota distinta al empujar y al jalar. Recorre cada botón una vez, tocando la nota que pida el asistente. El progreso se guarda automáticamente — puedes parar y continuar después.</p>
+      <h2>Ajustes</h2>
+      <p class="hint">Ajustes generales de la app y del sonido. La afinación y el tamaño del acordeón se ven arriba, en "En vivo".</p>
 
       <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
-        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Afinación actual</div>
-        <p class="hint" style="margin-top:0;">Se sincroniza sola con el botón físico D13 del acordeón — no hace falta tocar nada aquí.</p>
-        <div class="row-btns">
-          <div class="tuning-badge" data-tuning-badge="GCF-Sol">Sol (GCF)</div>
-          <div class="tuning-badge" data-tuning-badge="EAD-Mi">Mi (EAD)</div>
-          <div class="tuning-badge" data-tuning-badge="FBbEb-Fa">Fa (FBbEb)</div>
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Conexión WiFi (Raspberry Pi)</div>
+        <p class="hint" style="margin-top:0;">Alternativa al USB directo. Tu celular y la Pi deben estar en la misma red WiFi (o conectados al hotspot de la Pi). Ingresa la IP de la Pi — la puedes ver ahí con <code>hostname -I</code>.</p>
+        <input type="text" id="wifiIpInput" placeholder="ej. 192.168.1.42">
+        <button class="action" id="wifiConnectBtn" style="width:100%;margin-top:10px;">Conectar</button>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+          <span class="dot" id="wifiDot"></span><span id="wifiLabel" class="hint" style="margin:0;">Pi WiFi: Conectar</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Soundfonts guardados</div>
+        <p class="hint" style="margin-top:0;">Guarda hasta 5 SF2 en el celular y cambia entre ellos con un toque, sin volver a subir el archivo cada vez. Toca una ranura vacía para elegir un archivo.</p>
+        <div id="synthStatus" class="hint" style="margin-top:6px;"></div>
+        <div id="sf2SlotList" style="margin-top:10px;display:flex;flex-direction:column;gap:8px;"></div>
+        <input type="file" id="sf2SlotFileInput" accept=".sf2" class="hide">
+      </div>
+
+      <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
+        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Efectos de sonido</div>
+        <p class="hint" style="margin-top:0;">Afecta solo el sonido del sintetizador local (pestaña Sonido) — no cambia nada en el acordeón físico.</p>
+
+        <div style="margin-top:14px;">
+          <label class="hint" style="display:flex;justify-content:space-between;">Reverb (espacio/eco de sala) <span id="fxReverbVal">0%</span></label>
+          <input type="range" id="fxReverb" min="0" max="100" value="0" style="width:100%;">
+        </div>
+
+        <div style="margin-top:14px;">
+          <label class="hint" style="display:flex;justify-content:space-between;">Eco (delay repetido) <span id="fxEchoVal">0%</span></label>
+          <input type="range" id="fxEcho" min="0" max="100" value="0" style="width:100%;">
+        </div>
+
+        <div style="margin-top:14px;">
+          <label class="hint" style="display:flex;justify-content:space-between;">Graves <span id="fxBassVal">0 dB</span></label>
+          <input type="range" id="fxBass" min="-12" max="12" value="0" style="width:100%;">
         </div>
         <div style="margin-top:10px;">
-          <a href="#" id="advancedTuningToggle" class="hint" style="text-decoration:underline;">Opción avanzada: forzar afinación manualmente</a>
+          <label class="hint" style="display:flex;justify-content:space-between;">Medios <span id="fxMidVal">0 dB</span></label>
+          <input type="range" id="fxMid" min="-12" max="12" value="0" style="width:100%;">
         </div>
-        <div id="advancedTuningPanel" class="hide" style="margin-top:10px;">
-          <p class="hint" style="margin-top:0;color:var(--danger);">⚠️ Solo úsalo si el acordeón YA está físicamente en esa afinación (por ejemplo, para arrancar sincronizado antes del primer toque de D13). Forzarlo sin cambiar también el instrumento hace que algunos botones dejen de sonar.</p>
-          <div class="row-btns">
-            <button class="action secondary" data-tuning="GCF-Sol">Sol (GCF)</button>
-            <button class="action secondary" data-tuning="EAD-Mi">Mi (EAD)</button>
-            <button class="action secondary" data-tuning="FBbEb-Fa">Fa (FBbEb)</button>
-          </div>
+        <div style="margin-top:10px;">
+          <label class="hint" style="display:flex;justify-content:space-between;">Agudos <span id="fxTrebleVal">0 dB</span></label>
+          <input type="range" id="fxTreble" min="-12" max="12" value="0" style="width:100%;">
         </div>
-      </div>
 
-      <div style="margin-bottom:16px;padding:12px;background:#0c0a08;border-radius:8px;border:1px solid var(--line);">
-        <div style="font-size:13px;color:var(--brass);margin-bottom:8px;">Tamaño del acordeón</div>
-        <p class="hint" style="margin-top:0;">El de 31 botones es igual al de 34, solo sin los últimos 3 (11, 23 y 34). Elige cuál tienes para que el tablero no muestre botones que no existen.</p>
-        <div class="row-btns">
-          <button class="action secondary" data-board-size="31">31 botones</button>
-          <button class="action secondary" data-board-size="34">34 botones</button>
-        </div>
-      </div>
-
-      <div class="cal-progress" id="calProgress">0 / 34 botones mapeados</div>
-      <div id="calDuplicates"></div>
-      <div class="board-frame"><div class="board" id="boardCal"></div></div>
-      <div class="cal-target-name" id="calTargetName">—</div>
-      <div class="cal-instruction push" id="calInstruction">Toca "Iniciar" para comenzar</div>
-      <div class="row-btns">
-        <button class="action secondary" id="calSkip">Saltar botón</button>
-        <button class="action secondary" id="calBack">Atrás</button>
-        <button class="action" id="calStart">Iniciar</button>
-      </div>
-      <div class="row-btns" style="margin-top:8px;">
-        <button class="action danger" id="calReset">Borrar toda la calibración</button>
+        <button class="action secondary" id="fxReset" style="width:100%;margin-top:14px;">Restablecer efectos</button>
       </div>
     </div>
   </div>
@@ -410,9 +436,9 @@
    — es decir, al revés de como se ve el acordeón directamente.
 ------------------------------------------------------------------*/
 const ROWS = [
-  { id:'row1', count:11, colX:34,  rowOffset:1    },
-  { id:'row2', count:12, colX:96,  rowOffset:0.3  },
-  { id:'row3', count:11, colX:158, rowOffset:1    },
+  { id:'row1', count:11, colX:34,  rowOffset:1,   numStart:1  },
+  { id:'row2', count:12, colX:96,  rowOffset:0.3, numStart:12 },
+  { id:'row3', count:11, colX:158, rowOffset:1,   numStart:24 },
 ];
 const SPACING = 50;
 const PAD_TOP = 24;
@@ -442,7 +468,7 @@ function buildBoard(container){
       el.style.top = y+'px';
       const lbl = document.createElement('div');
       lbl.className='lbl';
-      lbl.textContent = i+1;
+      lbl.textContent = row.numStart + i;
       el.appendChild(lbl);
       const notes = document.createElement('div');
       notes.className='notes';
@@ -456,10 +482,9 @@ function buildBoard(container){
 }
 
 const boardLive = buildBoard(document.getElementById('boardLive'));
-const boardCal  = buildBoard(document.getElementById('boardCal'));
 const boardRec  = buildBoard(document.getElementById('boardRec'));
 const boardPractice = buildBoard(document.getElementById('boardPractice'));
-const ALL_BOARDS = [boardLive, boardCal, boardRec, boardPractice];
+const ALL_BOARDS = [boardLive, boardRec, boardPractice];
 
 // ── Tamaño de tablero: 31 o 34 botones ──────────────────────
 // El acordeón de 31 botones es igual al de 34, solo le faltan los
@@ -578,36 +603,9 @@ function refreshCalibratedStyling(){
       board[id].classList.toggle('uncalibrated', !has);
     });
   });
-  const count = ids.filter(id => mapping[id] && mapping[id].push!=null && mapping[id].pull!=null).length;
-  document.getElementById('calProgress').textContent = count+' / '+ids.length+' botones totalmente mapeados';
   refreshButtonNoteLabels();
-  renderDuplicateReport();
 }
 refreshCalibratedStyling();
-
-function findDuplicateNoteGroups(){
-  const byNote = {};
-  for(const id in mapping){
-    if(mapping[id].push!=null){
-      (byNote[mapping[id].push] ||= []).push(id+' (push)');
-    }
-    if(mapping[id].pull!=null){
-      (byNote[mapping[id].pull] ||= []).push(id+' (pull)');
-    }
-  }
-  return Object.entries(byNote).filter(([note, list]) => list.length > 1);
-}
-
-function renderDuplicateReport(){
-  const el = document.getElementById('calDuplicates');
-  if(!el) return;
-  const dupes = findDuplicateNoteGroups();
-  if(dupes.length === 0){ el.innerHTML = ''; return; }
-  el.innerHTML = '<p class="hint" style="margin-top:10px;color:var(--brass);">'
-    + 'Algunos botones comparten la misma nota musical — esto es normal en un acordeón diatónico. '
-    + 'Ya no afecta la vista en vivo (cada botón se identifica por sí mismo), esto es solo informativo:</p>'
-    + dupes.map(([note, list]) => `<div class="chip" style="display:block;margin-top:4px;">nota ${note}: ${list.join(', ')}</div>`).join('');
-}
 
 /* ---------------------------------------------------------------
    MIDI
@@ -647,10 +645,6 @@ function idsForNote(note){
 }
 
 function handleNoteEvent(isNoteOn, note){
-  if(calState.active){
-    if(isNoteOn) calCapture(note);
-    return;
-  }
   // Respaldo para hardware (como el Arduino actual) que solo manda
   // notas MIDI normales, sin el mensaje CC de identidad de botón.
   // Busca en el mapeo calibrado qué botón(es) usan esta nota y los
@@ -787,16 +781,10 @@ midiPill.addEventListener('click', () => {
    / {"type":"noteoff","note":60}.
 ------------------------------------------------------------------*/
 let bridgeSocket = null;
-const wifiPill = document.getElementById('wifiPill');
 const wifiDot = document.getElementById('wifiDot');
 const wifiLabel = document.getElementById('wifiLabel');
-const wifiPanel = document.getElementById('wifiPanel');
 const wifiIpInput = document.getElementById('wifiIpInput');
 const wifiConnectBtn = document.getElementById('wifiConnectBtn');
-
-wifiPill.addEventListener('click', () => {
-  wifiPanel.classList.toggle('hide');
-});
 
 function connectBridge(){
   const ip = wifiIpInput.value.trim();
@@ -844,80 +832,11 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
 });
 
 /* ---------------------------------------------------------------
-   CALIBRATION WIZARD
+   IDENTIFICACIÓN DE BOTONES
+   (calIds: índice físico 0-33 → id del tablero "row1-0", etc.
+   Se usa en toda la app para traducir eventos MIDI a botones.)
 ------------------------------------------------------------------*/
-const calState = { active:false, index:0, stage:'push' };
 const calIds = allButtonIds();
-const calTargetName = document.getElementById('calTargetName');
-const calInstruction = document.getElementById('calInstruction');
-const calStartBtn = document.getElementById('calStart');
-const calSkipBtn = document.getElementById('calSkip');
-const calBackBtn = document.getElementById('calBack');
-const calResetBtn = document.getElementById('calReset');
-
-function calRender(){
-  const ids = allButtonIds();
-  ids.forEach(id => boardCal[id].classList.remove('target','expect-push','expect-pull'));
-  if(!calState.active) return;
-  const id = calIds[calState.index];
-  calTargetName.textContent = 'Botón '+id;
-  boardCal[id].classList.add('target', calState.stage==='push' ? 'expect-push':'expect-pull');
-  calInstruction.className = 'cal-instruction '+calState.stage;
-  calInstruction.textContent = calState.stage==='push'
-    ? 'Abre el fuelle y presiona este botón'
-    : 'Ahora cierra el fuelle y presiona el mismo botón';
-  calBackBtn.disabled = (calState.index===0 && calState.stage==='push');
-}
-
-function calNextStage(){
-  if(calState.stage==='push'){
-    calState.stage='pull';
-  } else {
-    calState.stage='push';
-    calState.index++;
-    if(calState.index >= calIds.length){
-      calState.active=false;
-      calInstruction.textContent = '¡Listo! Puedes volver a calibrar cuando quieras.';
-      calRender();
-      refreshCalibratedStyling();
-      return;
-    }
-  }
-  calRender();
-}
-
-function calCapture(note){
-  const id = calIds[calState.index];
-  if(!mapping[id]) mapping[id] = {};
-  mapping[id][calState.stage] = note;
-  saveMapping();
-  refreshCalibratedStyling();
-  calNextStage();
-}
-
-calStartBtn.addEventListener('click', () => {
-  calState.active = true;
-  calState.index = 0;
-  calState.stage = 'push';
-  calRender();
-});
-calSkipBtn.addEventListener('click', () => {
-  if(!calState.active) return;
-  calState.stage='pull';
-  calNextStage();
-});
-calBackBtn.addEventListener('click', () => {
-  if(!calState.active) return;
-  if(calState.stage==='pull'){ calState.stage='push'; }
-  else if(calState.index>0){ calState.index--; calState.stage='pull'; }
-  calRender();
-});
-calResetBtn.addEventListener('click', () => {
-  if(!confirm('¿Borrar todos los botones calibrados? Esto no se puede deshacer.')) return;
-  mapping = {};
-  saveMapping();
-  refreshCalibratedStyling();
-});
 
 /* ---------------------------------------------------------------
    SONGS  (localStorage)
@@ -1230,17 +1149,16 @@ document.getElementById('practiceExit').addEventListener('click', () => {
    botones ya calibrado (mapping[id].push / mapping[id].pull),
    sin depender de la Raspberry Pi.
 ------------------------------------------------------------------*/
-const synthPill = document.getElementById('synthPill');
-const synthDot = document.getElementById('synthDot');
-const synthLabel = document.getElementById('synthLabel');
-const synthPanel = document.getElementById('synthPanel');
-const sf2FileInput = document.getElementById('sf2FileInput');
 const synthStatus = document.getElementById('synthStatus');
-const synthForgetBtn = document.getElementById('synthForgetBtn');
+const sf2SlotList = document.getElementById('sf2SlotList');
+const sf2SlotFileInput = document.getElementById('sf2SlotFileInput');
+const liveSf2Slots = document.getElementById('liveSf2Slots');
+const liveSf2Name = document.getElementById('liveSf2Name');
 
 const SF2_DB_NAME = 'acordeonix_sf2_db';
 const SF2_STORE = 'files';
-const SF2_KEY = 'current';
+const SF2_SLOT_COUNT = 5;
+const ACTIVE_SLOT_KEY = 'acordeonix_active_sf2_slot';
 
 let audioCtx = null;
 let synth = null;
@@ -1248,10 +1166,6 @@ let synthReady = false;
 // Notas activas por botón, para poder apagarlas exactamente aunque
 // el usuario recalibre a media sesión.
 const activeSynthNotes = {};
-
-synthPill.addEventListener('click', () => {
-  synthPanel.classList.toggle('hide');
-});
 
 function sf2OpenDb(){
   return new Promise((resolve, reject) => {
@@ -1261,29 +1175,29 @@ function sf2OpenDb(){
     req.onerror = () => reject(req.error);
   });
 }
-async function sf2Save(arrayBuffer, name){
+async function sf2SaveSlot(slot, arrayBuffer, name){
   const db = await sf2OpenDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(SF2_STORE, 'readwrite');
-    tx.objectStore(SF2_STORE).put({name, data: arrayBuffer}, SF2_KEY);
+    tx.objectStore(SF2_STORE).put({name, data: arrayBuffer}, 'slot'+slot);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
 }
-async function sf2Load(){
+async function sf2LoadSlot(slot){
   const db = await sf2OpenDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(SF2_STORE, 'readonly');
-    const req = tx.objectStore(SF2_STORE).get(SF2_KEY);
+    const req = tx.objectStore(SF2_STORE).get('slot'+slot);
     req.onsuccess = () => resolve(req.result || null);
     req.onerror = () => reject(req.error);
   });
 }
-async function sf2Forget(){
+async function sf2ForgetSlot(slot){
   const db = await sf2OpenDb();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(SF2_STORE, 'readwrite');
-    tx.objectStore(SF2_STORE).delete(SF2_KEY);
+    tx.objectStore(SF2_STORE).delete('slot'+slot);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
@@ -1291,8 +1205,7 @@ async function sf2Forget(){
 
 function setSynthStatus(text, ok){
   synthStatus.textContent = text;
-  synthDot.style.background = ok ? '#3ecf5e' : '';
-  synthLabel.textContent = ok ? 'Sonido: activo' : 'Sonido: Cargar SF2';
+  synthStatus.style.color = ok ? 'var(--brass)' : '';
 }
 
 async function ensureSynthEngine(){
@@ -1306,7 +1219,50 @@ async function ensureSynthEngine(){
   // buen punto de partida (~23ms de latencia); si se escucha entrecortado,
   // súbelo a 2048 o 4096.
   const node = synth.createAudioNode(audioCtx, 1024);
-  node.connect(audioCtx.destination);
+
+  // ── Cadena de efectos ──────────────────────────────────
+  // EQ (graves/medios/agudos) en serie, luego eco (delay con
+  // retroalimentación) mezclado con la señal seca. El reverb usa el
+  // motor interno de fluidsynth (synth.setReverb...), no pasa por aquí.
+  fxBassFilter = audioCtx.createBiquadFilter();
+  fxBassFilter.type = 'lowshelf';
+  fxBassFilter.frequency.value = 200;
+
+  fxMidFilter = audioCtx.createBiquadFilter();
+  fxMidFilter.type = 'peaking';
+  fxMidFilter.frequency.value = 1000;
+  fxMidFilter.Q.value = 0.8;
+
+  fxTrebleFilter = audioCtx.createBiquadFilter();
+  fxTrebleFilter.type = 'highshelf';
+  fxTrebleFilter.frequency.value = 3500;
+
+  fxDry = audioCtx.createGain();
+  fxDry.gain.value = 1;
+  fxWet = audioCtx.createGain();
+  fxWet.gain.value = 0; // 0% eco por default
+  fxDelay = audioCtx.createDelay(2.0);
+  fxDelay.delayTime.value = 0.28;
+  fxFeedback = audioCtx.createGain();
+  fxFeedback.gain.value = 0.35;
+
+  node.connect(fxBassFilter);
+  fxBassFilter.connect(fxMidFilter);
+  fxMidFilter.connect(fxTrebleFilter);
+
+  fxTrebleFilter.connect(fxDry);
+  fxDry.connect(audioCtx.destination);
+
+  fxTrebleFilter.connect(fxDelay);
+  fxDelay.connect(fxFeedback);
+  fxFeedback.connect(fxDelay);
+  fxDelay.connect(fxWet);
+  fxWet.connect(audioCtx.destination);
+}
+
+async function fxEnsureReady(){
+  await ensureSynthEngine();
+  if(audioCtx.state === 'suspended') await audioCtx.resume();
 }
 
 async function loadSoundfontIntoSynth(arrayBuffer, label){
@@ -1317,35 +1273,209 @@ async function loadSoundfontIntoSynth(arrayBuffer, label){
   setSynthStatus('Cargado: '+label, true);
 }
 
-sf2FileInput.addEventListener('change', async () => {
-  const file = sf2FileInput.files[0];
+/* ---------------------------------------------------------------
+   EFECTOS DE SONIDO (pestaña Ajustes): reverb, eco, ecualizador
+------------------------------------------------------------------*/
+let fxBassFilter, fxMidFilter, fxTrebleFilter, fxDelay, fxFeedback, fxWet, fxDry;
+
+const fxReverb = document.getElementById('fxReverb');
+const fxReverbVal = document.getElementById('fxReverbVal');
+const fxEcho = document.getElementById('fxEcho');
+const fxEchoVal = document.getElementById('fxEchoVal');
+const fxBass = document.getElementById('fxBass');
+const fxBassVal = document.getElementById('fxBassVal');
+const fxMid = document.getElementById('fxMid');
+const fxMidVal = document.getElementById('fxMidVal');
+const fxTreble = document.getElementById('fxTreble');
+const fxTrebleVal = document.getElementById('fxTrebleVal');
+const fxResetBtn = document.getElementById('fxReset');
+
+fxReverb.addEventListener('input', async () => {
+  fxReverbVal.textContent = fxReverb.value+'%';
+  await fxEnsureReady();
+  const level = parseInt(fxReverb.value,10)/100;
+  synth.setReverbOn(level>0);
+  synth.setReverb(0.6, 0.4, 0.8, level); // roomsize, damping, width, level
+});
+
+fxEcho.addEventListener('input', async () => {
+  fxEchoVal.textContent = fxEcho.value+'%';
+  await fxEnsureReady();
+  fxWet.gain.value = parseInt(fxEcho.value,10)/100 * 0.6; // tope razonable, evita saturar
+});
+
+fxBass.addEventListener('input', async () => {
+  fxBassVal.textContent = fxBass.value+' dB';
+  await fxEnsureReady();
+  fxBassFilter.gain.value = parseFloat(fxBass.value);
+});
+fxMid.addEventListener('input', async () => {
+  fxMidVal.textContent = fxMid.value+' dB';
+  await fxEnsureReady();
+  fxMidFilter.gain.value = parseFloat(fxMid.value);
+});
+fxTreble.addEventListener('input', async () => {
+  fxTrebleVal.textContent = fxTreble.value+' dB';
+  await fxEnsureReady();
+  fxTrebleFilter.gain.value = parseFloat(fxTreble.value);
+});
+
+fxResetBtn.addEventListener('click', async () => {
+  fxReverb.value = 0;  fxReverbVal.textContent = '0%';
+  fxEcho.value = 0;    fxEchoVal.textContent = '0%';
+  fxBass.value = 0;    fxBassVal.textContent = '0 dB';
+  fxMid.value = 0;     fxMidVal.textContent = '0 dB';
+  fxTreble.value = 0;  fxTrebleVal.textContent = '0 dB';
+  await fxEnsureReady();
+  synth.setReverbOn(false);
+  fxWet.gain.value = 0;
+  fxBassFilter.gain.value = 0;
+  fxMidFilter.gain.value = 0;
+  fxTrebleFilter.gain.value = 0;
+});
+
+const SLOT_NAMES_KEY = 'acordeonix_sf2_slot_names';
+
+function getSlotNames(){
+  try{
+    const arr = JSON.parse(localStorage.getItem(SLOT_NAMES_KEY) || '[]');
+    while(arr.length < SF2_SLOT_COUNT) arr.push(null);
+    return arr;
+  } catch(e){
+    return new Array(SF2_SLOT_COUNT).fill(null);
+  }
+}
+function setSlotName(slot, name){
+  const arr = getSlotNames();
+  arr[slot-1] = name;
+  localStorage.setItem(SLOT_NAMES_KEY, JSON.stringify(arr));
+}
+function getActiveSlot(){
+  return parseInt(localStorage.getItem(ACTIVE_SLOT_KEY) || '1', 10);
+}
+function setActiveSlot(slot){
+  localStorage.setItem(ACTIVE_SLOT_KEY, String(slot));
+}
+
+let pendingTargetSlot = 1;
+
+function renderSf2Slots(){
+  const names = getSlotNames();
+  const active = getActiveSlot();
+  sf2SlotList.innerHTML = '';
+  for(let i=1; i<=SF2_SLOT_COUNT; i++){
+    const name = names[i-1];
+    const row = document.createElement('div');
+    row.className = 'sf2-slot-row' + (i===active ? ' active' : '');
+    const label = document.createElement('div');
+    label.className = 'sf2-slot-label';
+    label.textContent = name ? (i+'. '+name) : (i+'. Vacío — toca para cargar');
+    row.appendChild(label);
+    if(name){
+      const delBtn = document.createElement('button');
+      delBtn.className = 'sf2-slot-del';
+      delBtn.textContent = '✕';
+      delBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await sf2ForgetSlot(i);
+        setSlotName(i, null);
+        renderSf2Slots();
+      });
+      row.appendChild(delBtn);
+    }
+    row.addEventListener('click', async () => {
+      if(name){
+        setSynthStatus('Cargando '+name+'…', false);
+        try{
+          const saved = await sf2LoadSlot(i);
+          await loadSoundfontIntoSynth(saved.data, saved.name);
+          setActiveSlot(i);
+          renderSf2Slots();
+        } catch(err){
+          setSynthStatus('Error al cargar: '+err.message, false);
+        }
+      } else {
+        pendingTargetSlot = i;
+        sf2SlotFileInput.click();
+      }
+    });
+    sf2SlotList.appendChild(row);
+  }
+  renderLiveSf2Slots();
+}
+
+// Versión compacta (solo números) para cambiar de soundfont sin salir
+// de la pestaña "En vivo" mientras se está tocando.
+function renderLiveSf2Slots(){
+  const names = getSlotNames();
+  const active = getActiveSlot();
+  liveSf2Slots.innerHTML = '';
+  for(let i=1; i<=SF2_SLOT_COUNT; i++){
+    const name = names[i-1];
+    const shortName = name ? (name.replace(/\.sf2$/i,'').length>9 ? name.replace(/\.sf2$/i,'').slice(0,8)+'…' : name.replace(/\.sf2$/i,'')) : null;
+    const btn = document.createElement('div');
+    btn.className = 'sf2-mini-slot' + (i===active ? ' active' : '') + (!name ? ' empty' : '');
+    btn.title = name || 'Ranura '+i+' vacía — toca para cargar';
+    btn.innerHTML = shortName
+      ? shortName
+      : ('<span style="font-size:9px;opacity:0.8;">Ranura '+i+'</span>');
+    btn.addEventListener('click', async () => {
+      if(name){
+        setSynthStatus('Cargando '+name+'…', false);
+        try{
+          const saved = await sf2LoadSlot(i);
+          await loadSoundfontIntoSynth(saved.data, saved.name);
+          setActiveSlot(i);
+          renderSf2Slots();
+        } catch(err){
+          setSynthStatus('Error al cargar: '+err.message, false);
+        }
+      } else {
+        // Ranura vacía: manda a Ajustes y abre de una vez el selector
+        // de archivo para esa misma ranura.
+        pendingTargetSlot = i;
+        document.querySelector('nav.tabs button[data-tab="calibrate"]').click();
+        sf2SlotFileInput.click();
+      }
+    });
+    liveSf2Slots.appendChild(btn);
+  }
+  const activeName = names[active-1];
+  liveSf2Name.textContent = activeName ? ('🎵 '+activeName) : 'Ninguna ranura cargada aún — ve a Ajustes';
+}
+renderSf2Slots();
+
+sf2SlotFileInput.addEventListener('change', async () => {
+  const file = sf2SlotFileInput.files[0];
+  sf2SlotFileInput.value = '';
   if(!file) return;
+  const slot = pendingTargetSlot;
   setSynthStatus('Cargando '+file.name+'…', false);
   try{
     const buf = await file.arrayBuffer();
     await loadSoundfontIntoSynth(buf, file.name);
-    await sf2Save(buf, file.name); // se guarda para la próxima vez que abras la app
+    await sf2SaveSlot(slot, buf, file.name);
+    setSlotName(slot, file.name);
+    setActiveSlot(slot);
+    renderSf2Slots();
   } catch(err){
     setSynthStatus('Error al cargar: '+err.message, false);
   }
 });
 
-synthForgetBtn.addEventListener('click', async () => {
-  await sf2Forget();
-  synthReady = false;
-  setSynthStatus('SF2 olvidado. Elige un archivo de nuevo.', false);
-});
-
-// Al abrir la app, intenta recuperar el SF2 ya guardado (no requiere
-// gesto del usuario para leer IndexedDB, pero sí para arrancar el
-// AudioContext — por eso se activa al primer toque en la pantalla).
+// Al abrir la app, intenta recuperar el SF2 de la ranura activa (no
+// requiere gesto del usuario para leer IndexedDB, pero sí para
+// arrancar el AudioContext — por eso se activa al primer toque).
 let pendingSavedSf2 = null;
-sf2Load().then(saved => {
-  if(saved){
-    pendingSavedSf2 = saved;
-    setSynthStatus('SF2 guardado: '+saved.name+' (toca la pantalla para activar el sonido)', false);
-  }
-}).catch(() => {});
+(async () => {
+  try{
+    const saved = await sf2LoadSlot(getActiveSlot());
+    if(saved){
+      pendingSavedSf2 = saved;
+      setSynthStatus('SF2 guardado: '+saved.name+' (toca la pantalla para activar el sonido)', false);
+    }
+  } catch(e){}
+})();
 
 async function tryAutoRestoreSf2(){
   if(!pendingSavedSf2 || synthReady) return;
