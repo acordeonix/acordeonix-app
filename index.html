@@ -715,6 +715,10 @@
     <div class="bar"><div id="practiceBar" style="width:0%;"></div></div>
     <div id="practiceScoreRow" class="hide hint" style="margin-top:4px;text-align:center;">✓ 0 &nbsp; · &nbsp; ✗ 0</div>
     <button class="action secondary hide" id="practiceMetroToggle" style="margin-top:6px;width:100%;">🔊 Metrónomo</button>
+    <div class="row-btns hide" id="practiceTimedControls" style="margin-top:6px;">
+      <button class="action secondary" id="practiceRepeatBtn">↺ Repetir paso</button>
+      <button class="action secondary" id="practicePauseBtn">⏸ Pausar</button>
+    </div>
     <audio id="practiceTrackAudio" loop style="display:none;"></audio>
     <div class="board-frame"><div class="board" id="boardPractice"></div></div>
     <div class="cal-instruction" id="practiceInstruction" style="margin-top:10px;" data-i18n="practice.instructionDefault">Presiona el botón resaltado</div>
@@ -1653,6 +1657,51 @@ practiceMetroToggle.addEventListener('click', () => {
   metroMuted = !metroMuted;
   practiceMetroToggle.textContent = metroMuted ? '🔇 Metrónomo (silenciado)' : '🔊 Metrónomo';
 });
+const practiceTimedControls = document.getElementById('practiceTimedControls');
+const practicePauseBtn = document.getElementById('practicePauseBtn');
+const practiceRepeatBtn = document.getElementById('practiceRepeatBtn');
+
+practicePauseBtn.addEventListener('click', () => {
+  if(!practiceState.timed) return;
+  practiceState.paused = !practiceState.paused;
+  if(practiceState.paused){
+    // Pausa: congela el metrónomo, el reloj y la pista — así puedes
+    // ver con calma qué botón sigue, sin que corra el tiempo.
+    practiceState.pauseStartPerf = performance.now();
+    stopMetronome();
+    if(practiceTickTimer){ clearInterval(practiceTickTimer); practiceTickTimer = null; }
+    practiceTrackAudio.pause();
+    practicePauseBtn.textContent = '▶ Reanudar';
+  } else {
+    // Reanudar: recorremos el reloj exactamente lo que duró la pausa,
+    // para que ningún paso se haya "quemado" mientras veías el tablero.
+    const pausedMs = performance.now() - practiceState.pauseStartPerf;
+    practiceState.startPerf += pausedMs;
+    startMetronome(songs[practiceState.songIdx].bpm);
+    practiceTickTimer = setInterval(practiceTimedTick, 30);
+    if(practiceTrackAudio.src) practiceTrackAudio.play().catch(()=>{});
+    practicePauseBtn.textContent = '⏸ Pausar';
+  }
+});
+
+practiceRepeatBtn.addEventListener('click', () => {
+  if(!practiceState.timed || practiceState.paused) return;
+  const song = songs[practiceState.songIdx];
+  if(practiceState.stepIdx > 0) practiceState.stepIdx--;
+  practiceState.pressed = new Set();
+  // Si el tiempo de ese paso ya pasó, recorremos el reloj hacia
+  // adelante para darte un compás completo de gracia antes de
+  // volver a exigírtelo — sin desordenar el ritmo de los pasos
+  // siguientes (todos se recorren igual, juntos).
+  const beatMs = 60000/song.bpm;
+  const target = stepTargetTime(song, practiceState.stepIdx);
+  const now = performance.now();
+  if(target < now){
+    practiceState.startPerf += (now + beatMs - target);
+  }
+  practiceRender();
+});
+
 const practicePrevBtn = document.getElementById('practicePrev');
 const practiceSkipBtn = document.getElementById('practiceSkip');
 
@@ -1675,7 +1724,7 @@ function stopPracticeMetronome(){
   if(practiceTickTimer){ clearInterval(practiceTickTimer); practiceTickTimer = null; }
 }
 function practiceTimedTick(){
-  if(!practiceState.active || !practiceState.timed) return;
+  if(!practiceState.active || !practiceState.timed || practiceState.paused) return;
   const song = songs[practiceState.songIdx];
   if(practiceState.stepIdx >= song.steps.length) return;
   const target = stepTargetTime(song, practiceState.stepIdx);
@@ -1724,6 +1773,7 @@ function startPractice(idx){
   practiceState.pressed = new Set();
   practiceState.hits = 0;
   practiceState.misses = 0;
+  practiceState.paused = false;
   practiceTitle.textContent = song.name;
   showPanel('practice');
   startPracticeTrack(song);
@@ -1734,6 +1784,8 @@ function startPractice(idx){
   practiceState.timed = !!(song.bpm && song.steps.length && !Array.isArray(song.steps[0]));
   practiceScoreRow.classList.toggle('hide', !practiceState.timed);
   practiceMetroToggle.classList.toggle('hide', !practiceState.timed);
+  practiceTimedControls.classList.toggle('hide', !practiceState.timed);
+  practicePauseBtn.textContent = '⏸ Pausar';
   practicePrevBtn.classList.toggle('hide', practiceState.timed);
   practiceSkipBtn.classList.toggle('hide', practiceState.timed);
 
@@ -1786,6 +1838,7 @@ function practiceRender(){
   }
 }
 function practiceCheckById(id, dir){
+  if(practiceState.timed && practiceState.paused) return;
   const song = songs[practiceState.songIdx];
   if(practiceState.stepIdx >= song.steps.length) return;
   const notes = stepNotes(song.steps[practiceState.stepIdx]);
