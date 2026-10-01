@@ -686,6 +686,7 @@
       <input type="file" id="recTrackFile" accept="audio/*">
       <div id="recTrackName" class="hint" style="margin-top:6px;"></div>
       <button class="action secondary" id="recTrackClear" style="width:100%;margin-top:8px;display:none;">Quitar pista</button>
+      <button class="action secondary" id="recTrackMuteBtn" style="width:100%;margin-top:8px;display:none;">🔊 Pista</button>
       <audio id="recTrackAudio" style="display:none;"></audio>
     </div>
     <div id="recSharedRow" class="hide" style="margin-top:10px;padding:10px;background:#0c0a08;border-radius:8px;border:1px solid var(--brass);">
@@ -1458,6 +1459,9 @@ function openRecordPanel(category, returnTab){
   document.getElementById('recTrackFile').value = '';
   document.getElementById('recTrackName').textContent = '';
   document.getElementById('recTrackClear').style.display = 'none';
+  document.getElementById('recTrackMuteBtn').style.display = 'none';
+  recTrackAudio.muted = false;
+  document.getElementById('recTrackMuteBtn').textContent = '🔊 Pista';
   recTrackAudio.pause();
   recTrackAudio.removeAttribute('src');
   if(recTrackObjectUrl){ URL.revokeObjectURL(recTrackObjectUrl); recTrackObjectUrl = null; }
@@ -1476,6 +1480,9 @@ document.getElementById('recTrackFile').addEventListener('change', () => {
   recTrackFile = document.getElementById('recTrackFile').files[0] || null;
   document.getElementById('recTrackName').textContent = recTrackFile ? recTrackFile.name : '';
   document.getElementById('recTrackClear').style.display = recTrackFile ? 'block' : 'none';
+  document.getElementById('recTrackMuteBtn').style.display = recTrackFile ? 'block' : 'none';
+  recTrackAudio.muted = false;
+  document.getElementById('recTrackMuteBtn').textContent = '🔊 Pista';
   recTrackAudio.pause();
   recTrackAudio.removeAttribute('src');
   if(recTrackObjectUrl){ URL.revokeObjectURL(recTrackObjectUrl); recTrackObjectUrl = null; }
@@ -1484,11 +1491,18 @@ document.getElementById('recTrackFile').addEventListener('change', () => {
     recTrackAudio.src = recTrackObjectUrl;
   }
 });
+document.getElementById('recTrackMuteBtn').addEventListener('click', () => {
+  recTrackAudio.muted = !recTrackAudio.muted;
+  document.getElementById('recTrackMuteBtn').textContent = recTrackAudio.muted ? '🔇 Pista (silenciada)' : '🔊 Pista';
+});
 document.getElementById('recTrackClear').addEventListener('click', () => {
   recTrackFile = null;
   document.getElementById('recTrackFile').value = '';
   document.getElementById('recTrackName').textContent = '';
   document.getElementById('recTrackClear').style.display = 'none';
+  document.getElementById('recTrackMuteBtn').style.display = 'none';
+  recTrackAudio.muted = false;
+  document.getElementById('recTrackMuteBtn').textContent = '🔊 Pista';
   recTrackAudio.pause();
   recTrackAudio.removeAttribute('src');
   if(recTrackObjectUrl){ URL.revokeObjectURL(recTrackObjectUrl); recTrackObjectUrl = null; }
@@ -1618,6 +1632,9 @@ recSave.addEventListener('click', async () => {
   document.getElementById('recTrackFile').value = '';
   document.getElementById('recTrackName').textContent = '';
   document.getElementById('recTrackClear').style.display = 'none';
+  document.getElementById('recTrackMuteBtn').style.display = 'none';
+  recTrackAudio.muted = false;
+  document.getElementById('recTrackMuteBtn').textContent = '🔊 Pista';
   if(shareCheck) shareCheck.checked = false;
   document.querySelectorAll('.difficulty-opt').forEach(b => b.classList.toggle('active', b.getAttribute('data-difficulty')==='1'));
   renderSongList();
