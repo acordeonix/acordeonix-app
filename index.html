@@ -711,6 +711,7 @@
     </div>
     <div class="bar"><div id="practiceBar" style="width:0%;"></div></div>
     <div id="practiceScoreRow" class="hide hint" style="margin-top:4px;text-align:center;">✓ 0 &nbsp; · &nbsp; ✗ 0</div>
+    <button class="action secondary hide" id="practiceMetroToggle" style="margin-top:6px;width:100%;">🔊 Metrónomo</button>
     <audio id="practiceTrackAudio" loop style="display:none;"></audio>
     <div class="board-frame"><div class="board" id="boardPractice"></div></div>
     <div class="cal-instruction" id="practiceInstruction" style="margin-top:10px;" data-i18n="practice.instructionDefault">Presiona el botón resaltado</div>
@@ -1361,6 +1362,9 @@ const songNameInput = document.getElementById('songNameInput');
 let metroCtx = null;
 let metroTimer = null;
 let metroBeatCount = 0;
+// Silencia solo el sonido del clic (durante la práctica); la
+// medición de tiempo sigue funcionando igual, muteado o no.
+let metroMuted = false;
 
 function metroEnsureCtx(){
   if(!metroCtx) metroCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1368,6 +1372,7 @@ function metroEnsureCtx(){
   return metroCtx;
 }
 function metroClick(accent){
+  if(metroMuted) return;
   const ctx = metroEnsureCtx();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -1601,6 +1606,11 @@ const practiceProg = document.getElementById('practiceProg');
 const practiceBar = document.getElementById('practiceBar');
 const practiceInstruction = document.getElementById('practiceInstruction');
 const practiceScoreRow = document.getElementById('practiceScoreRow');
+const practiceMetroToggle = document.getElementById('practiceMetroToggle');
+practiceMetroToggle.addEventListener('click', () => {
+  metroMuted = !metroMuted;
+  practiceMetroToggle.textContent = metroMuted ? '🔇 Metrónomo (silenciado)' : '🔊 Metrónomo';
+});
 const practicePrevBtn = document.getElementById('practicePrev');
 const practiceSkipBtn = document.getElementById('practiceSkip');
 
@@ -1681,6 +1691,7 @@ function startPractice(idx){
   // tienen, y siguen funcionando en el modo libre de siempre).
   practiceState.timed = !!(song.bpm && song.steps.length && !Array.isArray(song.steps[0]));
   practiceScoreRow.classList.toggle('hide', !practiceState.timed);
+  practiceMetroToggle.classList.toggle('hide', !practiceState.timed);
   practicePrevBtn.classList.toggle('hide', practiceState.timed);
   practiceSkipBtn.classList.toggle('hide', practiceState.timed);
 
