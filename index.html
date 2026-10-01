@@ -686,6 +686,7 @@
       <input type="file" id="recTrackFile" accept="audio/*">
       <div id="recTrackName" class="hint" style="margin-top:6px;"></div>
       <button class="action secondary" id="recTrackClear" style="width:100%;margin-top:8px;display:none;">Quitar pista</button>
+      <audio id="recTrackAudio" style="display:none;"></audio>
     </div>
     <div id="recSharedRow" class="hide" style="margin-top:10px;padding:10px;background:#0c0a08;border-radius:8px;border:1px solid var(--brass);">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ivory-dim);">
@@ -1143,6 +1144,8 @@ document.querySelectorAll('nav.tabs button').forEach(btn => {
     if(typeof stopMetronome === 'function') stopMetronome();
     if(typeof stopPracticeMetronome === 'function') stopPracticeMetronome();
     if(typeof stopPracticeTrack === 'function') stopPracticeTrack();
+    const rta = document.getElementById('recTrackAudio');
+    if(rta) rta.pause();
   });
 });
 
@@ -1455,6 +1458,9 @@ function openRecordPanel(category, returnTab){
   document.getElementById('recTrackFile').value = '';
   document.getElementById('recTrackName').textContent = '';
   document.getElementById('recTrackClear').style.display = 'none';
+  recTrackAudio.pause();
+  recTrackAudio.removeAttribute('src');
+  if(recTrackObjectUrl){ URL.revokeObjectURL(recTrackObjectUrl); recTrackObjectUrl = null; }
   songNameInput.value = '';
   renderTape();
   recToggle.textContent = 'Iniciar grabación';
@@ -1464,23 +1470,35 @@ function openRecordPanel(category, returnTab){
 }
 
 let recTrackFile = null;
+let recTrackObjectUrl = null;
+const recTrackAudio = document.getElementById('recTrackAudio');
 document.getElementById('recTrackFile').addEventListener('change', () => {
   recTrackFile = document.getElementById('recTrackFile').files[0] || null;
   document.getElementById('recTrackName').textContent = recTrackFile ? recTrackFile.name : '';
   document.getElementById('recTrackClear').style.display = recTrackFile ? 'block' : 'none';
+  recTrackAudio.pause();
+  recTrackAudio.removeAttribute('src');
+  if(recTrackObjectUrl){ URL.revokeObjectURL(recTrackObjectUrl); recTrackObjectUrl = null; }
+  if(recTrackFile){
+    recTrackObjectUrl = URL.createObjectURL(recTrackFile);
+    recTrackAudio.src = recTrackObjectUrl;
+  }
 });
 document.getElementById('recTrackClear').addEventListener('click', () => {
   recTrackFile = null;
   document.getElementById('recTrackFile').value = '';
   document.getElementById('recTrackName').textContent = '';
   document.getElementById('recTrackClear').style.display = 'none';
+  recTrackAudio.pause();
+  recTrackAudio.removeAttribute('src');
+  if(recTrackObjectUrl){ URL.revokeObjectURL(recTrackObjectUrl); recTrackObjectUrl = null; }
 });
 
 newSongBtn.addEventListener('click', () => openRecordPanel('song', 'songs'));
 document.getElementById('newScaleBtn').addEventListener('click', () => openRecordPanel('scale', 'exercises'));
 document.getElementById('newFingeringBtn').addEventListener('click', () => openRecordPanel('fingering', 'exercises'));
 
-recCancel.addEventListener('click', () => { recState.active=false; stopMetronome(); showPanel('library'); });
+recCancel.addEventListener('click', () => { recState.active=false; stopMetronome(); recTrackAudio.pause(); showPanel('library'); });
 
 recToggle.addEventListener('click', () => {
   recState.active = !recState.active;
@@ -1493,12 +1511,17 @@ recToggle.addEventListener('click', () => {
     }
     recActiveStartPerf = performance.now();
     startMetronome(recBpmValue);
+    if(recTrackFile){
+      recTrackAudio.currentTime = recActiveElapsedMs/1000;
+      recTrackAudio.play().catch(()=>{});
+    }
   } else {
     if(recActiveStartPerf != null){
       recActiveElapsedMs += performance.now() - recActiveStartPerf;
       recActiveStartPerf = null;
     }
     stopMetronome();
+    recTrackAudio.pause();
   }
 });
 
@@ -1554,6 +1577,7 @@ document.querySelectorAll('.difficulty-opt').forEach(btn => {
 recSave.addEventListener('click', async () => {
   flushChord();
   stopMetronome();
+  recTrackAudio.pause();
   const name = songNameInput.value.trim();
   if(!name){ alert('Primero ponle un nombre a la canción.'); return; }
   if(recState.steps.length===0){ alert('Graba al menos una nota primero.'); return; }
